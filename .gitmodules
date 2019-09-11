@@ -1,0 +1,3 @@
+[submodule "solocator/settingmanager"]
+	path = solocator/settingmanager
+	url = git@github.com:opengisch/qgissettingmanager.git
