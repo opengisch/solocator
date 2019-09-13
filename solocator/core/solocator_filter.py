@@ -376,18 +376,25 @@ class SoLocatorFilter(QgsLocatorFilter):
     Recursive method to load layers / groups
     """
     def load_layer(self, data: dict, tree_group: QgsLayerTreeGroup):
-        self.dbg_info(data)
-        if data['type'] == LAYER_GROUP:
-            group = tree_group.addGroup(data['display'])
-            self.load_layer(data['sublayers'], group)
-
+        if type(data) is list:
+            for d in data:
+                self.load_layer(d, tree_group)
         else:
-            url = "contextualWMSLegend=0&crs={crs}&dpiMode=7&featureCount=10&format=image/jpeg&layers={layer}&styles&url={url}".format(
-                crs=data['crs'], layer=data['wms_datasource'][0]['name'], url=data['wms_datasource'][0]['service_url']
-            )
-            layer = QgsRasterLayer(url, data['display'], 'wms')
-            QgsProject.instance().addMapLayer(layer, False)
-            tree_group.addLayer(layer)
+            self.dbg_info('*** load: {}'.format(data.keys()))
+            if data['type'] == LAYER_GROUP:
+                group = tree_group.addGroup(data['display'])
+                self.load_layer(data['sublayers'], group)
+            else:
+                self.dbg_info('*** load: {}'.format(data['wms_datasource']))
+                ds = data['wms_datasource']
+                if type(ds) is list and len(ds) == 1:
+                    ds = ds[0]
+                url = "contextualWMSLegend=0&crs={crs}&dpiMode=7&featureCount=10&format=image/jpeg&layers={layer}&styles&url={url}".format(
+                    crs=data['crs'], layer=ds['name'], url=ds['service_url']
+                )
+                layer = QgsRasterLayer(url, data['display'], 'wms')
+                QgsProject.instance().addMapLayer(layer, False)
+                tree_group.addLayer(layer)
 
     def info(self, msg="", level=Qgis.Info, emit_message: bool = False):
         self.logMessage(str(msg), level)
