@@ -22,7 +22,6 @@ import json
 import os
 import re
 import sys, traceback
-from enum import Enum
 
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QColor, QIcon
@@ -43,31 +42,11 @@ from solocator.solocator_plugin import DEBUG
 import solocator.resources_rc  # NOQA
 
 
-class FilterType(Enum):
-    Location = 'locations'
-    WMS = 'layers'
-    Feature = 'featuresearch'
-
-
-class WMSLayerResult:
-    def __init__(self, layer, title):
-        self.title = title
-        self.layer = layer
-
-
-class LocationResult:
-    def __init__(self, point, bbox, layer, feature_id, html_label):
-        self.point = point
-        self.bbox = bbox
-        self.layer = layer
-        self.feature_id = feature_id
-        self.html_label = html_label
-
-
 class FeatureResult:
-    def __init__(self, point, layer, feature_id):
-        self.point = point
-        self.layer = layer
+    def __init__(self, dataproduct_id, id_field_name, id_field_type, feature_id):
+        self.dataproduct_id = dataproduct_id
+        self.id_field_name = id_field_name
+        self.id_field_type = id_field_type
         self.feature_id = feature_id
 
 
@@ -85,7 +64,7 @@ class SoLocatorFilter(QgsLocatorFilter):
 
     message_emitted = pyqtSignal(str, str, Qgis.MessageLevel, QWidget)
 
-    def __init__(self, filter_type: FilterType, iface: QgisInterface = None, crs: str = None):
+    def __init__(self, iface: QgisInterface = None, crs: str = None):
         """"
         :param filter_type: the type of filter
         :param locale_lang: the language of the locale.
@@ -93,7 +72,6 @@ class SoLocatorFilter(QgsLocatorFilter):
         :param crs: if iface is not given, it shall be provided, see clone()
         """
         super().__init__()
-        self.type = filter_type
         self.rubber_band = None
         self.feature_rubber_band = None
         self.iface = iface
@@ -135,7 +113,7 @@ class SoLocatorFilter(QgsLocatorFilter):
         return 'SoLocator'
 
     def clone(self):
-        return SoLocatorFilter(self.type, crs=self.crs)
+        return SoLocatorFilter(crs=self.crs)
 
     def priority(self):
         return QgsLocatorFilter.Highest
@@ -210,6 +188,7 @@ class SoLocatorFilter(QgsLocatorFilter):
 
             self.result_found = False
 
+            # see https://geo-t.so.ch/api/search/v2/api/
             url = 'https://geo-t.so.ch/api/search/v2'
             params = {
                 'searchtext': str(search),
@@ -256,10 +235,37 @@ class SoLocatorFilter(QgsLocatorFilter):
             # self.dbg_info(data)
 
             for res in data['results']:
-                if 'feature' in res:
-                    self.dbg_info("feature: {}".format(res['feature'].keys()))
-                elif 'dataproduct' in res:
-                    self.dbg_info("dataproduct: {}".format(res['dataproduct'].keys()))
+                self.dbg_info(res)
+
+                if 'feature' in res.keys():
+                    f = res['feature']
+                    self.dbg_info("feature: {}".format(f))
+
+                    result = QgsLocatorResult()
+                    result.filter = self
+                    result.displayString = f['display']
+                    result.group = 'Features'
+                    result.userData = FeatureResult(
+                        dataproduct_id=f['dataproduct_id'],
+                        id_field_name=f['id_field_name'],
+                        id_field_type=f['id_field_type'],
+                        feature_id=f['feature_id']
+                    )
+                    result.icon = QIcon(":/plugins/solocator/icons/solocator.png")
+                    self.result_found = True
+                    self.resultFetched.emit(result)
+
+                elif 'dataproduct' in res.keys():
+                    self.dbg_info("dataproduct: {}".format(res['dataproduct']))
+
+                continue
+
+
+
+
+
+
+
 
                 # available keys: ﻿['origin', 'lang', 'layer', 'staging', 'title', 'topics', 'detail', 'label', 'id']
                 for key, val in res['attrs'].items():
@@ -337,6 +343,10 @@ class SoLocatorFilter(QgsLocatorFilter):
         if type(result.userData) == NoResult:
             pass
 
+        elif type(result.userData) == FeatureResult:
+            self.fetch_feature(result.userData)
+
+        return
 
         # WMS
         url_with_params = 'contextualWMSLegend=0' \
@@ -380,20 +390,16 @@ class SoLocatorFilter(QgsLocatorFilter):
         rect.scale(1.1)
         self.map_canvas.setExtent(rect)
         self.map_canvas.refresh()
-        
-    def fetch_feature(self, layer, feature_id):
-        # Try to get more info
+
+    def fetch_feature(self, feature: FeatureResult):
+        # see https://geo-t.so.ch/api/data/v1/api/
+        url = 'https://geo-t.so.ch/api/data/v1/{dataset}/{id}'.format(
+            dataset=feature.dataproduct_id, id=feature.feature_id
+        )
         self.nam_fetch_feature = NetworkAccessManager()
-        url_detail = 'https://api3.geo.admin.ch/rest/services/api/MapServer/{layer}/{feature_id}' \
-            .format(layer=layer, feature_id=feature_id)
-        params = {
-            'lang': self.lang,
-            'sr': self.crs
-        }
-        url_detail = self.url_with_param(url_detail, params)
-        self.dbg_info(url_detail)
+        self.dbg_info(url)
         self.nam_fetch_feature.finished.connect(self.parse_feature_response)
-        self.nam_fetch_feature.request(url_detail, headers=self.HEADERS, blocking=False)
+        self.nam_fetch_feature.request(url, headers=self.HEADERS, blocking=False)
 
     def parse_feature_response(self, response):
         if response.status_code != 200:
@@ -403,7 +409,29 @@ class SoLocatorFilter(QgsLocatorFilter):
             return
 
         data = json.loads(response.content.decode('utf-8'))
-        self.dbg_info(data)
+        self.dbg_info(data.keys())
+        self.dbg_info(data['properties'])
+        self.dbg_info(data['geometry'])
+        self.dbg_info(data['crs'])
+        self.dbg_info(data['type'])
+
+        geometry_type = data['geometry']['type']
+
+        if geometry_type == 'Point':
+            geometry = QgsGeometry.fromPointXY(QgsPointXY(data['geometry']['coordinates'][0],
+                                                          data['geometry']['coordinates'][1]))
+            geometry.transform(self.transform_ch)
+        elif geometry_type == 'Polygon':
+            rings = data['geometry']['coordinates']
+            for r in range(0, len(rings)):
+                for p in range(0, len(rings[r])):
+                    rings[r][p] = QgsPointXY(rings[r][p][0], rings[r][p][1])
+            geometry = QgsGeometry.fromPolygonXY(rings)
+            geometry.transform(self.transform_ch)
+            geometry.transform(self.transform_ch)
+
+        else:
+            self.info('SoLocator does not handle {} yet. Please contact support.'.format(geometry_type))
 
         if 'feature' not in data or 'geometry' not in data['feature']:
             return
