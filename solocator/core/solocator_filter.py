@@ -147,8 +147,10 @@ class SoLocatorFilter(QgsLocatorFilter):
         return 'sol'
 
     def clearPreviousResults(self):
-        self.rubber_band.reset(QgsWkbTypes.PointGeometry)
-        self.feature_rubber_band.reset(QgsWkbTypes.PolygonGeometry)
+        if self.rubber_band:
+            self.rubber_band.reset(QgsWkbTypes.PointGeometry)
+        if self.feature_rubber_band:
+            self.feature_rubber_band.reset(QgsWkbTypes.PolygonGeometry)
 
         if self.current_timer is not None:
             self.current_timer.stop()
@@ -175,35 +177,6 @@ class SoLocatorFilter(QgsLocatorFilter):
         src_crs_4326 = QgsCoordinateReferenceSystem('EPSG:4326')
         self.transform_4326 = QgsCoordinateTransform(src_crs_4326, dst_crs, QgsProject.instance())
 
-    def group_info(self, group: str) -> (str, str):
-        groups = {'zipcode': {'name': self.tr('ZIP code'),
-                              'layer': 'ch.swisstopo-vd.ortschaftenverzeichnis_plz'},
-                  'gg25': {'name': self.tr('Municipal boundaries'),
-                           'layer': 'ch.swisstopo.swissboundaries3d-gemeinde-flaeche.fill'},
-                  'district': {'name': self.tr('District'),
-                               'layer': 'ch.swisstopo.swissboundaries3d-bezirk-flaeche.fill'},
-                  'kantone': {'name': self.tr('Cantons'),
-                              'layer': 'ch.swisstopo.swissboundaries3d-kanton-flaeche.fill'},
-                  'gazetteer': {'name': self.tr('Index'),
-                                'layer': 'ch.swisstopo.swissnames3d'},  # there is also: ch.bav.haltestellen-oev ?
-                  'address': {'name': self.tr('Address'), 'layer': 'ch.bfs.gebaeude_wohnungs_register'},
-                  'parcel': {'name': self.tr('Parcel'), 'layer': None}
-                  }
-        if group not in groups:
-            self.info('Could not find group {} in dictionary'.format(group))
-            return None, None
-        return groups[group]['name'], groups[group]['layer']
-
-    @staticmethod
-    def rank2priority(rank) -> float:
-        """
-        Translate the rank from geoportal to the priority of the result
-        see https://api3.geo.admin.ch/services/sdiservices.html#search
-        :param rank: an integer from 1 to 7
-        :return: the priority as a float from 0 to 1, 1 being a perfect match
-        """
-        return float(-rank / 7 + 1)
-
     @staticmethod
     def box2geometry(box: str) -> QgsRectangle:
         """
@@ -227,7 +200,7 @@ class SoLocatorFilter(QgsLocatorFilter):
 
     def fetchResults(self, search: str, context: QgsLocatorContext, feedback: QgsFeedback):
         try:
-            self.dbg_info("start Swiss locator search...")
+            self.dbg_info("start solocator search...")
 
             if len(search) < 2:
                 return
@@ -237,31 +210,25 @@ class SoLocatorFilter(QgsLocatorFilter):
 
             self.result_found = False
 
-            url = 'https://api3.geo.admin.ch/rest/services/api/SearchServer'
+            url = 'https://geo-t.so.ch/api/search/v2'
             params = {
-                'type': self.type.value,
-                'searchText': str(search),
-                'returnGeometry': 'true',
-                'lang': self.lang,
-                'sr': self.crs,
-                'limit': str(self.settings.value('{type}_limit'.format(type=self.type.value)))
-                # bbox Must be provided if the searchText is not.
-                # A comma separated list of 4 coordinates representing
-                # the bounding box on which features should be filtered (SRID: 21781).
+                'searchtext': str(search),
+                'filter': self.settings.enabled_categories(),
+                'limit': str(self.settings.value('limit'))
+
             }
-            # Locations, WMS layers
-            if self.type is not FilterType.Feature:
-                nam = NetworkAccessManager()
-                feedback.canceled.connect(nam.abort)
-                url = self.url_with_param(url, params)
-                self.dbg_info(url)
-                try:
-                    (response, content) = nam.request(url, headers=self.HEADERS, blocking=True)
-                    self.handle_response(response)
-                except RequestsExceptionUserAbort:
-                    pass
-                except RequestsException as err:
-                    self.info(err)
+
+            nam = NetworkAccessManager()
+            feedback.canceled.connect(nam.abort)
+            url = self.url_with_param(url, params)
+            self.dbg_info(url)
+            try:
+                (response, content) = nam.request(url, headers=self.HEADERS, blocking=True)
+                self.handle_response(response)
+            except RequestsExceptionUserAbort:
+                pass
+            except RequestsException as err:
+                self.info(err)
 
             if not self.result_found:
                 result = QgsLocatorResult()
@@ -288,68 +255,71 @@ class SoLocatorFilter(QgsLocatorFilter):
             data = json.loads(response.content.decode('utf-8'))
             # self.dbg_info(data)
 
-            for loc in data['results']:
-                self.dbg_info("keys: {}".format(loc['attrs'].keys()))
-                if loc['attrs']['origin'] == 'layer':
-                    # available keys: ﻿['origin', 'lang', 'layer', 'staging', 'title', 'topics', 'detail', 'label', 'id']
-                    for key, val in loc['attrs'].items():
-                        self.dbg_info('{}: {}'.format(key, val))
-                    result = QgsLocatorResult()
-                    result.filter = self
-                    result.displayString = loc['attrs']['title']
-                    result.description = loc['attrs']['layer']
-                    result.userData = WMSLayerResult(layer=loc['attrs']['layer'], title=loc['attrs']['title'])
-                    result.icon = QgsApplication.getThemeIcon("/mActionAddWmsLayer.svg")
-                    self.result_found = True
-                    self.resultFetched.emit(result)
+            for res in data['results']:
+                if 'feature' in res:
+                    self.dbg_info("feature: {}".format(res['feature'].keys()))
+                elif 'dataproduct' in res:
+                    self.dbg_info("dataproduct: {}".format(res['dataproduct'].keys()))
 
-                elif loc['attrs']['origin'] == 'feature':
-                    for key, val in loc['attrs'].items():
-                        self.dbg_info('{}: {}'.format(key, val))
-                    result = QgsLocatorResult()
-                    result.filter = self
-                    layer = loc['attrs']['layer']
-                    point = QgsPointXY(loc['attrs']['lon'], loc['attrs']['lat'])
-                    if layer in self.searchable_layers:
-                        layer_display = self.searchable_layers[layer]
-                    else:
-                        self.info(self.tr('Layer {} is not in the list of searchable layers.'
-                                          ' Please report issue.'.format(layer)), Qgis.Warning)
-                        layer_display = layer
-                    result.group = layer_display
-                    result.displayString = loc['attrs']['detail']
-                    result.userData = FeatureResult(point=point,
-                                                    layer=layer,
-                                                    feature_id=loc['attrs']['feature_id'])
-                    result.icon = QIcon(":/plugins/solocator/icons/solocator.png")
-                    self.result_found = True
-                    self.resultFetched.emit(result)
+                # available keys: ﻿['origin', 'lang', 'layer', 'staging', 'title', 'topics', 'detail', 'label', 'id']
+                for key, val in res['attrs'].items():
+                    self.dbg_info('{}: {}'.format(key, val))
+                result = QgsLocatorResult()
+                result.filter = self
+                result.displayString = res['attrs']['title']
+                result.description = res['attrs']['layer']
+                result.userData = WMSLayerResult(layer=loc['attrs']['layer'], title=loc['attrs']['title'])
+                result.icon = QgsApplication.getThemeIcon("/mActionAddWmsLayer.svg")
+                self.result_found = True
+                self.resultFetched.emit(result)
 
-                else:  # locations
-                    for key, val in loc['attrs'].items():
-                        self.dbg_info('{}: {}'.format(key, val))
-                    group_name, group_layer = self.group_info(loc['attrs']['origin'])
-                    if 'layerBodId' in loc['attrs']:
-                        self.dbg_info("layer: {}".format(loc['attrs']['layerBodId']))
-                    if 'featureId' in loc['attrs']:
-                        self.dbg_info("feature: {}".format(loc['attrs']['featureId']))
 
-                    result = QgsLocatorResult()
-                    result.filter = self
-                    result.displayString = strip_tags(loc['attrs']['label'])
-                    # result.description = loc['attrs']['detail']
-                    # if 'featureId' in loc['attrs']:
-                    #     result.description = loc['attrs']['featureId']
-                    result.group = group_name
-                    result.userData = LocationResult(point=QgsPointXY(loc['attrs']['y'], loc['attrs']['x']),
-                                                     bbox=self.box2geometry(loc['attrs']['geom_st_box2d']),
-                                                     layer=group_layer,
-                                                     feature_id=loc['attrs']['featureId'] if 'featureId' in loc['attrs']
-                                                     else None,
-                                                     html_label=loc['attrs']['label'])
-                    result.icon = QIcon(":/plugins/solocator/icons/solocator.png")
-                    self.result_found = True
-                    self.resultFetched.emit(result)
+                for key, val in loc['attrs'].items():
+                    self.dbg_info('{}: {}'.format(key, val))
+                result = QgsLocatorResult()
+                result.filter = self
+                layer = loc['attrs']['layer']
+                point = QgsPointXY(loc['attrs']['lon'], loc['attrs']['lat'])
+                if layer in self.searchable_layers:
+                    layer_display = self.searchable_layers[layer]
+                else:
+                    self.info(self.tr('Layer {} is not in the list of searchable layers.'
+                                      ' Please report issue.'.format(layer)), Qgis.Warning)
+                    layer_display = layer
+                result.group = layer_display
+                result.displayString = loc['attrs']['detail']
+                result.userData = FeatureResult(point=point,
+                                                layer=layer,
+                                                feature_id=loc['attrs']['feature_id'])
+                result.icon = QIcon(":/plugins/solocator/icons/solocator.png")
+                self.result_found = True
+                self.resultFetched.emit(result)
+
+                # locations
+                for key, val in loc['attrs'].items():
+                    self.dbg_info('{}: {}'.format(key, val))
+                group_name, group_layer = self.group_info(loc['attrs']['origin'])
+                if 'layerBodId' in loc['attrs']:
+                    self.dbg_info("layer: {}".format(loc['attrs']['layerBodId']))
+                if 'featureId' in loc['attrs']:
+                    self.dbg_info("feature: {}".format(loc['attrs']['featureId']))
+
+                result = QgsLocatorResult()
+                result.filter = self
+                result.displayString = strip_tags(loc['attrs']['label'])
+                # result.description = loc['attrs']['detail']
+                # if 'featureId' in loc['attrs']:
+                #     result.description = loc['attrs']['featureId']
+                result.group = group_name
+                result.userData = LocationResult(point=QgsPointXY(loc['attrs']['y'], loc['attrs']['x']),
+                                                 bbox=self.box2geometry(loc['attrs']['geom_st_box2d']),
+                                                 layer=group_layer,
+                                                 feature_id=loc['attrs']['featureId'] if 'featureId' in loc['attrs']
+                                                 else None,
+                                                 html_label=loc['attrs']['label'])
+                result.icon = QIcon(":/plugins/solocator/icons/solocator.png")
+                self.result_found = True
+                self.resultFetched.emit(result)
 
         except Exception as e:
             self.info(str(e), Qgis.Critical)
@@ -361,72 +331,45 @@ class SoLocatorFilter(QgsLocatorFilter):
     def triggerResult(self, result: QgsLocatorResult):
         # this should be run in the main thread, i.e. mapCanvas should not be None
         
-        # remove any map tip
+        # remove any previous result
         self.clearPreviousResults()
-            
+
         if type(result.userData) == NoResult:
             pass
+
+
         # WMS
-        elif type(result.userData) == WMSLayerResult:
-            url_with_params = 'contextualWMSLegend=0' \
-                              '&crs=EPSG:{crs}' \
-                              '&dpiMode=7' \
-                              '&featureCount=10' \
-                              '&format=image/png' \
-                              '&layers={layer}' \
-                              '&styles=' \
-                              '&url=http://wms.geo.admin.ch/?VERSION%3D2.0.0'\
-                .format(crs=self.crs, layer=result.userData.layer)
-            wms_layer = QgsRasterLayer(url_with_params, result.displayString, 'wms')
-            label = QLabel()
-            label.setTextFormat(Qt.RichText)
-            label.setTextInteractionFlags(Qt.TextBrowserInteraction)
-            label.setOpenExternalLinks(True)
-            if not wms_layer.isValid():
-                msg = self.tr('Cannot load WMS layer: {} ({})'.format(result.userData.title, result.userData.layer))
-                level = Qgis.Warning
-                label.setText('<a href="https://map.geo.admin.ch/'
-                              '?lang=fr&bgLayer=ch.swisstopo.pixelkarte-farbe&layers={}">'
-                              'Open layer in map.geo.admin.ch</a>'.format(result.userData.layer))
-                self.info(msg, level)
-            else:
-                msg = self.tr('WMS layer added to the map: {} ({})'.format(result.userData.title, result.userData.layer))
-                level = Qgis.Info
-                label.setText('<a href="https://map.geo.admin.ch/'
-                              '?lang=fr&bgLayer=ch.swisstopo.pixelkarte-farbe&layers={}">'
-                              'Open layer in map.geo.admin.ch</a>'.format(result.userData.layer))
-
-                QgsProject.instance().addMapLayer(wms_layer)
-
-            self.message_emitted.emit(self.displayName(), msg, level, label)
-
-        # Feature
-        elif type(result.userData) == FeatureResult:
-            point = QgsGeometry.fromPointXY(result.userData.point)
-            point.transform(self.transform_4326)
-            self.highlight(point)
-        # Location
+        url_with_params = 'contextualWMSLegend=0' \
+                          '&crs=EPSG:{crs}' \
+                          '&dpiMode=7' \
+                          '&featureCount=10' \
+                          '&format=image/png' \
+                          '&layers={layer}' \
+                          '&styles=' \
+                          '&url=http://wms.geo.admin.ch/?VERSION%3D2.0.0'\
+            .format(crs=self.crs, layer=result.userData.layer)
+        wms_layer = QgsRasterLayer(url_with_params, result.displayString, 'wms')
+        label = QLabel()
+        label.setTextFormat(Qt.RichText)
+        label.setTextInteractionFlags(Qt.TextBrowserInteraction)
+        label.setOpenExternalLinks(True)
+        if not wms_layer.isValid():
+            msg = self.tr('Cannot load WMS layer: {} ({})'.format(result.userData.title, result.userData.layer))
+            level = Qgis.Warning
+            label.setText('<a href="https://map.geo.admin.ch/'
+                          '?lang=fr&bgLayer=ch.swisstopo.pixelkarte-farbe&layers={}">'
+                          'Open layer in map.geo.admin.ch</a>'.format(result.userData.layer))
+            self.info(msg, level)
         else:
-            point = QgsGeometry.fromPointXY(result.userData.point)
-            bbox = QgsGeometry.fromRect(result.userData.bbox)
-            layer = result.userData.layer
-            feature_id = result.userData.feature_id
-            if not point or not bbox:
-                return
+            msg = self.tr('WMS layer added to the map: {} ({})'.format(result.userData.title, result.userData.layer))
+            level = Qgis.Info
+            label.setText('<a href="https://map.geo.admin.ch/'
+                          '?lang=fr&bgLayer=ch.swisstopo.pixelkarte-farbe&layers={}">'
+                          'Open layer in map.geo.admin.ch</a>'.format(result.userData.layer))
 
-            point.transform(self.transform_ch)
-            bbox.transform(self.transform_ch)
+            QgsProject.instance().addMapLayer(wms_layer)
 
-            self.highlight(point, bbox)
-
-            if layer and feature_id:
-                self.fetch_feature(layer, feature_id)
-
-            else:
-                self.current_timer = QTimer()
-                self.current_timer.timeout.connect(self.clearPreviousResults)
-                self.current_timer.setSingleShot(True)
-                self.current_timer.start(5000)
+        self.message_emitted.emit(self.displayName(), msg, level, label)
                 
     def highlight(self, point, bbox=None):
         if bbox is None:

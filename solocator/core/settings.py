@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding': 'utf-8 -*-
 # -----------------------------------------------------------
 #
 # QGIS Swiss Locator Plugin
@@ -24,27 +24,37 @@
 #
 # ---------------------------------------------------------------------
 
+from solocator.settingmanager import SettingManager, Scope, Bool, String, Stringlist, Integer, Enum, Dictionary
 
-from qgis.core import QgsLocatorFilter
-from swiss_locator.qgissettingmanager import SettingManager, Scope, Bool, String, Stringlist, Integer, Enum
-
-pluginName = "swiss_locator_plugin"
+pluginName = "solocator"
 
 
 class Settings(SettingManager):
     def __init__(self):
         SettingManager.__init__(self, pluginName)
 
+        self.add_setting(Integer('limit', Scope.Global, 20))
 
-        self.add_setting(Enum('locations_priority', Scope.Global, QgsLocatorFilter.Highest))
-        self.add_setting(Integer('locations_limit', Scope.Global, 8))
-        self.add_setting(Enum('featuresearch_priority', Scope.Global, QgsLocatorFilter.Medium))
-        self.add_setting(Integer('featuresearch_limit', Scope.Global, 8))
-        self.add_setting(Enum('layers_priority', Scope.Global, QgsLocatorFilter.High))
-        self.add_setting(Integer('layers_limit', Scope.Global, 5))
+        self.add_setting(Dictionary('categories', Scope.Global,
+                                    {'dataproduct': 'Karten & Geodaten',
+                                     'ch.so.agi.gemeindegrenzen': 'Gemeinden',
+                                     'ch.so.agi.av.gebaeudeadressen.gebaeudeeingaenge': 'Adressen',
+                                     'ch.so.agi.av.bodenbedeckung': 'Bodenbedeckungsnamen',
+                                     'ch.so.agi.av.grundstuecke.projektierte': 'Grundstücke projektiert',
+                                     'ch.so.agi.av.grundstuecke.rechtskraeftig': 'Grundstücke rechtskräftig',
+                                     'ch.so.agi.av.nomenklatur.flurnamen': 'Flurnamen',
+                                     'ch.so.agi.av.nomenklatur.gelaendenamen': 'Geländenamen'}))
 
-        self.add_setting(Bool("feature_search_restrict", Scope.Global, False))
-        self.add_setting(Stringlist("feature_search_layers_list", Scope.Global, None))
+        # save only skipped categories so newly added categories will be enabled by default
+        self.add_setting(Stringlist('skipped_categories', Scope.Global, None))
+
+    def enabled_categories(self):
+        categories = self.value('categories').keys()
+        skipped = self.value('skipped_categories')
+        return ','.join(list(filter(lambda id: id not in skipped, categories)))
+
+
+
 
 
 

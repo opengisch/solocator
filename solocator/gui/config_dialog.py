@@ -27,10 +27,8 @@ from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QAbstractItemView, QCombo
 from qgis.PyQt.uic import loadUiType
 from qgis.core import QgsLocatorFilter
 
-from ..qgissettingmanager.setting_dialog import SettingDialog, UpdateMode
-from ..core.settings import Settings
-from ..core.language import get_language
-from ..map_geo_admin.layers import searchable_layers
+from solocator.settingmanager.setting_dialog import SettingDialog, UpdateMode
+from solocator.core.settings import Settings
 
 DialogUi, _ = loadUiType(os.path.join(os.path.dirname(__file__), '../ui/config.ui'))
 
@@ -42,18 +40,6 @@ class ConfigDialog(QDialog, DialogUi, SettingDialog):
         SettingDialog.__init__(self, setting_manager=settings, mode=UpdateMode.DialogAccept)
         self.setupUi(self)
 
-        self.lang.addItem(self.tr('use the application locale, defaults to English'), '')
-        from ..swiss_locator_filter import AVAILABLE_LANGUAGES, FilterType
-        for key, val in AVAILABLE_LANGUAGES.items():
-            self.lang.addItem(key, val)
-        for filter_type in FilterType:
-            cb = self.findChild(QComboBox, '{}_priority'.format(filter_type.value))
-            cb.addItem(self.tr('Highest'), QgsLocatorFilter.Highest)
-            cb.addItem(self.tr('High'), QgsLocatorFilter.High)
-            cb.addItem(self.tr('Medium'), QgsLocatorFilter.Medium)
-            cb.addItem(self.tr('Low'), QgsLocatorFilter.Low)
-            cb.addItem(self.tr('Lowest'), QgsLocatorFilter.Lowest)
-
         self.crs.addItem(self.tr('Use map CRS if possible, defaults to CH1903+'), 'project')
         self.crs.addItem('CH 1903+ (EPSG:2056)', '2056')
         self.crs.addItem('CH 1903 (EPSG:21781)', '21781')
@@ -61,24 +47,6 @@ class ConfigDialog(QDialog, DialogUi, SettingDialog):
         self.search_line_edit.textChanged.connect(self.filter_rows)
         self.select_all_button.pressed.connect(self.select_all)
         self.unselect_all_button.pressed.connect(lambda: self.select_all(False))
-
-        lang = get_language()
-        layers = searchable_layers(lang)
-        self.feature_search_layers_list.setRowCount(len(layers))
-        self.feature_search_layers_list.setColumnCount(2)
-        self.feature_search_layers_list.setHorizontalHeaderLabels((self.tr('Layer'), self.tr('Description')))
-        self.feature_search_layers_list.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.feature_search_layers_list.setSelectionMode(QAbstractItemView.SingleSelection)
-        r = 0
-        for layer, description in layers.items():
-            item = QTableWidgetItem(layer)
-            item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsUserCheckable)
-            #item.setCheckState(Qt.Unchecked)
-            self.feature_search_layers_list.setItem(r, 0, item)
-            self.feature_search_layers_list.setItem(r, 1, QTableWidgetItem(description))
-            r += 1
-        self.feature_search_layers_list.horizontalHeader().setStretchLastSection(True)
-        self.feature_search_layers_list.resizeColumnsToContents()
 
         self.settings = settings
         self.init_widgets()

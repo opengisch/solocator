@@ -17,12 +17,12 @@
  ***************************************************************************/
 """
 
+DEBUG = True
+
 from PyQt5.QtWidgets import QWidget
 from qgis.core import Qgis
 from qgis.gui import QgisInterface, QgsMessageBarItem
 from solocator.core.solocator_filter import SoLocatorFilter
-
-DEBUG = True
 
 
 class SoLocatorPlugin:
