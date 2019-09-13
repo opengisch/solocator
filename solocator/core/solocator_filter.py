@@ -62,25 +62,23 @@ class SoLocatorFilter(QgsLocatorFilter):
 
     message_emitted = pyqtSignal(str, str, Qgis.MessageLevel, QWidget)
 
-    def __init__(self, iface: QgisInterface = None, crs: str = None):
+    def __init__(self, iface: QgisInterface = None):
         """"
         :param iface: QGIS interface, given when on the main thread (which will display/trigger results), None otherwise
         :param crs: if iface is not given, it shall be provided, see clone()
         """
         super().__init__()
-        self.rubber_band = None
+
         self.iface = iface
-        self.map_canvas = None
         self.settings = Settings()
+
+        #  following properties will only be used in main thread
+        self.rubber_band = None
+        self.map_canvas = None
         self.transform_ch = None
-        self.transform_4326 = None
         self.current_timer = None
-        self.crs = None
         self.result_found = False
         self.nam_fetch_feature = None
-
-        if crs:
-            self.crs = crs
 
         if iface is not None:
             # happens only in main thread
@@ -103,7 +101,7 @@ class SoLocatorFilter(QgsLocatorFilter):
         return 'SoLocator'
 
     def clone(self):
-        return SoLocatorFilter(crs=self.crs)
+        return SoLocatorFilter()
 
     def priority(self):
         return QgsLocatorFilter.Highest
@@ -140,21 +138,6 @@ class SoLocatorFilter(QgsLocatorFilter):
         dst_crs = self.map_canvas.mapSettings().destinationCrs()
         self.transform_ch = QgsCoordinateTransform(src_crs_ch, dst_crs, QgsProject.instance())
 
-        src_crs_4326 = QgsCoordinateReferenceSystem('EPSG:4326')
-        self.transform_4326 = QgsCoordinateTransform(src_crs_4326, dst_crs, QgsProject.instance())
-
-    @staticmethod
-    def box2geometry(box: str) -> QgsRectangle:
-        """
-        Creates a rectangle from a Box definition as string
-        :param box: the box as a string
-        :return: the rectangle
-        """
-        coords = re.findall(r'\b(\d+(?:\.\d+)?)\b', box)
-        if len(coords) != 4:
-            raise InvalidBox('Could not parse: {}'.format(box))
-        return QgsRectangle(float(coords[0]), float(coords[1]), float(coords[2]), float(coords[3]))
-
     @staticmethod
     def url_with_param(url, params) -> str:
         url = QUrl(url)
@@ -168,10 +151,7 @@ class SoLocatorFilter(QgsLocatorFilter):
         try:
             self.dbg_info("start solocator search...")
 
-            if len(search) < 2:
-                return
-
-            if len(search) < 4 and self.type is FilterType.Feature:
+            if len(search) < 3:
                 return
 
             self.result_found = False
@@ -249,9 +229,6 @@ class SoLocatorFilter(QgsLocatorFilter):
 
 
 
-
-
-
         except Exception as e:
             self.info(str(e), Qgis.Critical)
             exc_type, exc_obj, exc_traceback = sys.exc_info()
@@ -260,9 +237,8 @@ class SoLocatorFilter(QgsLocatorFilter):
             self.info(traceback.print_exception(exc_type, exc_obj, exc_traceback), Qgis.Critical)
 
     def triggerResult(self, result: QgsLocatorResult):
-        # this should be run in the main thread, i.e. mapCanvas should not be None
+        # this is run in the main thread, i.e. map_canvas is not None
         
-        # remove any previous result
         self.clearPreviousResults()
 
         if type(result.userData) == NoResult:
@@ -322,19 +298,16 @@ class SoLocatorFilter(QgsLocatorFilter):
         if geometry_type == 'Point':
             geometry = QgsGeometry.fromPointXY(QgsPointXY(data['geometry']['coordinates'][0],
                                                           data['geometry']['coordinates'][1]))
-
         elif geometry_type == 'Polygon':
             rings = data['geometry']['coordinates']
             for r in range(0, len(rings)):
                 for p in range(0, len(rings[r])):
                     rings[r][p] = QgsPointXY(rings[r][p][0], rings[r][p][1])
             geometry = QgsGeometry.fromPolygonXY(rings)
-
         else:
             self.info('SoLocator does not handle {} yet. Please contact support.'.format(geometry_type))
 
         geometry.transform(self.transform_ch)
-
         self.highlight(geometry)
 
     def info(self, msg="", level=Qgis.Info, emit_message: bool = False):
