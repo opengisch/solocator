@@ -25,19 +25,17 @@ import sys, traceback
 
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QColor, QIcon
-from PyQt5.QtWidgets import QLabel, QWidget, QTabWidget
-from PyQt5.QtCore import QUrl, QUrlQuery, pyqtSignal, QEventLoop
+from PyQt5.QtWidgets import QWidget, QTabWidget
+from PyQt5.QtCore import QUrl, QUrlQuery, pyqtSignal
 
-from qgis.core import Qgis, QgsLocatorFilter, QgsLocatorResult, QgsRectangle, QgsApplication, \
-    QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, QgsGeometry, QgsWkbTypes, QgsPointXY, \
-    QgsLocatorContext, QgsFeedback, QgsRasterLayer
+from qgis.core import Qgis, QgsLocatorFilter, QgsLocatorResult, QgsRectangle, QgsCoordinateReferenceSystem, \
+    QgsCoordinateTransform, QgsProject, QgsGeometry, QgsWkbTypes, QgsPointXY, QgsLocatorContext, QgsFeedback
 from qgis.gui import QgsRubberBand, QgisInterface
 
 from solocator.core.network_access_manager import NetworkAccessManager, RequestsException, RequestsExceptionUserAbort
 from solocator.core.settings import Settings
 from solocator.gui.config_dialog import ConfigDialog
 from solocator.solocator_plugin import DEBUG
-#from solocator.utils.html_stripper import strip_tags
 
 import solocator.resources_rc  # NOQA
 
@@ -66,8 +64,6 @@ class SoLocatorFilter(QgsLocatorFilter):
 
     def __init__(self, iface: QgisInterface = None, crs: str = None):
         """"
-        :param filter_type: the type of filter
-        :param locale_lang: the language of the locale.
         :param iface: QGIS interface, given when on the main thread (which will display/trigger results), None otherwise
         :param crs: if iface is not given, it shall be provided, see clone()
         """
@@ -80,7 +76,6 @@ class SoLocatorFilter(QgsLocatorFilter):
         self.transform_4326 = None
         self.current_timer = None
         self.crs = None
-        self.event_loop = None
         self.result_found = False
         self.nam_fetch_feature = None
 
@@ -277,8 +272,9 @@ class SoLocatorFilter(QgsLocatorFilter):
             self.fetch_feature(result.userData)
 
     def highlight(self, geometry: QgsGeometry):
+        self.clearPreviousResults()
+
         if geometry is None:
-            self.clearPreviousResults()
             return
 
         self.rubber_band.reset(geometry.type())
@@ -288,6 +284,11 @@ class SoLocatorFilter(QgsLocatorFilter):
         rect.scale(1.1)
         self.map_canvas.setExtent(rect)
         self.map_canvas.refresh()
+
+        self.current_timer = QTimer()
+        self.current_timer.timeout.connect(self.clearPreviousResults)
+        self.current_timer.setSingleShot(True)
+        self.current_timer.start(5000)
 
     def fetch_feature(self, feature: FeatureResult):
         # see https://geo-t.so.ch/api/data/v1/api/
