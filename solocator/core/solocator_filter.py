@@ -20,7 +20,6 @@
 
 import json
 import os
-import re
 import sys, traceback
 
 from PyQt5.QtCore import Qt, QTimer
@@ -39,6 +38,9 @@ from solocator.gui.config_dialog import ConfigDialog
 from solocator.solocator_plugin import DEBUG
 
 import solocator.resources_rc  # NOQA
+
+
+LAYER_GROUP = 'layergroup'
 
 
 class FeatureResult:
@@ -355,11 +357,21 @@ class SoLocatorFilter(QgsLocatorFilter):
             return
 
         data = json.loads(response.content.decode('utf-8'))
-        for i, v in data.items():
-            if i == 'qml': continue
-            self.dbg_info('*** {}: {}'.format(i, v))
 
-        if 'wms_datasource' in data:
+        # debug
+        for i, v in data.items():
+            if i in ('qml', 'contacts'): continue
+            if i == 'sublayers':
+                for sublayer in data['sublayers']:
+                    for j, u in sublayer.items():
+                        if j in ('qml', 'contacts'): continue
+                        self.dbg_info('*** sublayer {}: {}'.format(j, u))
+            else:
+                self.dbg_info('*** {}: {}'.format(i, v))
+
+        if data['type'] == LAYER_GROUP:
+            pass
+        elif 'wms_datasource' in data:
             url = "contextualWMSLegend=0&crs={crs}&dpiMode=7&featureCount=10&format=image/jpeg&layers={layer}&styles&url={url}".format(
                 crs=data['crs'], layer=data['wms_datasource'][0]['name'], url=data['wms_datasource'][0]['service_url']
             )
@@ -375,7 +387,3 @@ class SoLocatorFilter(QgsLocatorFilter):
         if DEBUG:
             self.info(msg)
 
-    @staticmethod
-    def break_camelcase(identifier):
-        matches = re.finditer('.+?(?:(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)', identifier)
-        return ' '.join([m.group(0) for m in matches])
