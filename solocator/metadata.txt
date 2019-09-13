@@ -2,8 +2,8 @@
 [general]
 name=SoLocator
 qgisMinimumVersion=3.4
-description=A locator filter for Solothurn
-about=
+description=Suche für Geodaten Kanton Solothurn
+about=Integration in die QGIS Suche für die Geodateninfrastruktur im Kanton Solothurn. Über dieses Plugin können Layer, Flurnamen, Adressen und andere Objekte im Kanton Solothurn gesucht und lokalisiert werden.
 version=dev
 author=Denis Rouzaud
 email=denis@opengis.ch

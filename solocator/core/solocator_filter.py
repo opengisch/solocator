@@ -29,7 +29,8 @@ from PyQt5.QtWidgets import QWidget, QTabWidget
 from PyQt5.QtCore import QUrl, QUrlQuery, pyqtSignal
 
 from qgis.core import Qgis, QgsLocatorFilter, QgsLocatorResult, QgsRectangle, QgsCoordinateReferenceSystem, \
-    QgsCoordinateTransform, QgsProject, QgsGeometry, QgsWkbTypes, QgsPointXY, QgsLocatorContext, QgsFeedback
+    QgsCoordinateTransform, QgsProject, QgsGeometry, QgsWkbTypes, QgsPointXY, QgsLocatorContext, QgsFeedback, \
+    QgsRasterLayer
 from qgis.gui import QgsRubberBand, QgisInterface
 
 from solocator.core.network_access_manager import NetworkAccessManager, RequestsException, RequestsExceptionUserAbort
@@ -47,12 +48,22 @@ class FeatureResult:
         self.id_field_type = id_field_type
         self.feature_id = feature_id
 
+    def __repr__(self):
+        return 'SoLocator Feature: {}/{}'.format(self.dataproduct_id, self.feature_id)
+
+
+class DataProductResult:
+    def __init__(self, type, dataproduct_id, dset_info, sublayers):
+        self.type = type
+        self.dataproduct_id = dataproduct_id
+        self.dset_info = dset_info
+        self.sublayers = sublayers
+
+    def __repr__(self):
+        return 'SoLocator Data Product: {} {} ()'.format(self.type, self.dataproduct_id, self.dset_info, self.sublayers)
+
 
 class NoResult:
-    pass
-
-
-class InvalidBox(Exception):
     pass
 
 
@@ -205,29 +216,43 @@ class SoLocatorFilter(QgsLocatorFilter):
             for res in data['results']:
                 self.dbg_info(res)
 
+                result = QgsLocatorResult()
+                result.filter = self
+
                 if 'feature' in res.keys():
                     f = res['feature']
                     self.dbg_info("feature: {}".format(f))
-
-                    result = QgsLocatorResult()
-                    result.filter = self
                     result.displayString = f['display']
                     result.group = 'Features'
+                    result.description = None
                     result.userData = FeatureResult(
                         dataproduct_id=f['dataproduct_id'],
                         id_field_name=f['id_field_name'],
                         id_field_type=f['id_field_type'],
                         feature_id=f['feature_id']
                     )
-                    result.icon = QIcon(":/plugins/solocator/icons/solocator.png")
-                    self.result_found = True
-                    self.resultFetched.emit(result)
 
                 elif 'dataproduct' in res.keys():
-                    self.dbg_info("dataproduct: {}".format(res['dataproduct']))
+                    dp = res['dataproduct']
+                    self.dbg_info("dataproduct: {}".format(dp))
+                    result = QgsLocatorResult()
+                    result.filter = self
+                    result.displayString = 'xxxxx'+dp['display']
+                    result.description = dp['type']
+                    result.group = 'Layers'
+                    result.userData = DataProductResult(
+                        type=dp['type'],
+                        dataproduct_id=dp['dataproduct_id'],
+                        dset_info=dp['dset_info'],
+                        sublayers=dp.get('sublayers', None)
+                    )
 
+                else:
+                    continue
 
-
+                result.icon = QIcon(":/plugins/solocator/icons/solocator.png")
+                self.result_found = True
+                self.resultFetched.emit(result)
 
         except Exception as e:
             self.info(str(e), Qgis.Critical)
@@ -238,18 +263,19 @@ class SoLocatorFilter(QgsLocatorFilter):
 
     def triggerResult(self, result: QgsLocatorResult):
         # this is run in the main thread, i.e. map_canvas is not None
-        
         self.clearPreviousResults()
 
         if type(result.userData) == NoResult:
             pass
-
         elif type(result.userData) == FeatureResult:
             self.fetch_feature(result.userData)
+        elif type(result.userData) == DataProductResult:
+            self.fetch_data_product(result.userData)
+        else:
+            self.info('Incorrect result. Please contact support', Qgis.Critical)
 
     def highlight(self, geometry: QgsGeometry):
         self.clearPreviousResults()
-
         if geometry is None:
             return
 
@@ -267,6 +293,7 @@ class SoLocatorFilter(QgsLocatorFilter):
         self.current_timer.start(5000)
 
     def fetch_feature(self, feature: FeatureResult):
+        self.dbg_info(feature)
         # see https://geo-t.so.ch/api/data/v1/api/
         url = 'https://geo-t.so.ch/api/data/v1/{dataset}/{id}'.format(
             dataset=feature.dataproduct_id, id=feature.feature_id
@@ -305,10 +332,39 @@ class SoLocatorFilter(QgsLocatorFilter):
                     rings[r][p] = QgsPointXY(rings[r][p][0], rings[r][p][1])
             geometry = QgsGeometry.fromPolygonXY(rings)
         else:
-            self.info('SoLocator does not handle {} yet. Please contact support.'.format(geometry_type))
+            # SoLocator does not handle {} yet. Please contact support
+            self.info('SoLocator does not handle {} yet. Please contact support.'.format(geometry_type), Qgis.Warning) # ToTranslate
 
         geometry.transform(self.transform_ch)
         self.highlight(geometry)
+
+    def fetch_data_product(self, product: DataProductResult):
+        self.dbg_info(product)
+        # see https://geo-t.so.ch/api/dataproduct/v1/api/
+        url = 'https://geo-t.so.ch/api/dataproduct/v1/{dataproduct_id}'.format(dataproduct_id=product.dataproduct_id)
+        self.nam_fetch_feature = NetworkAccessManager()
+        self.dbg_info(url)
+        self.nam_fetch_feature.finished.connect(self.parse_data_product_response)
+        self.nam_fetch_feature.request(url, headers=self.HEADERS, blocking=False)
+
+    def parse_data_product_response(self, response):
+        if response.status_code != 200:
+            if not isinstance(response.exception, RequestsExceptionUserAbort):
+                self.info("Error in feature response with status code: {} from {}"
+                          .format(response.status_code, response.url))
+            return
+
+        data = json.loads(response.content.decode('utf-8'))
+        for i, v in data.items():
+            if i == 'qml': continue
+            self.dbg_info('*** {}: {}'.format(i, v))
+
+        if 'wms_datasource' in data:
+            url = "contextualWMSLegend=0&crs={crs}&dpiMode=7&featureCount=10&format=image/jpeg&layers={layer}&styles&url={url}".format(
+                crs=data['crs'], layer=data['wms_datasource'][0]['name'], url=data['wms_datasource'][0]['service_url']
+            )
+            layer = QgsRasterLayer(url, data['display'], 'wms')
+            QgsProject.instance().addMapLayer(layer)
 
     def info(self, msg="", level=Qgis.Info, emit_message: bool = False):
         self.logMessage(str(msg), level)
