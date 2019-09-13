@@ -73,7 +73,6 @@ class SoLocatorFilter(QgsLocatorFilter):
         """
         super().__init__()
         self.rubber_band = None
-        self.feature_rubber_band = None
         self.iface = iface
         self.map_canvas = None
         self.settings = Settings()
@@ -93,19 +92,15 @@ class SoLocatorFilter(QgsLocatorFilter):
             self.map_canvas = iface.mapCanvas()
             self.map_canvas.destinationCrsChanged.connect(self.create_transforms)
 
-            self.rubber_band = QgsRubberBand(self.map_canvas, QgsWkbTypes.PointGeometry)
-            self.rubber_band.setColor(QColor(255, 255, 50, 200))
+            self.rubber_band = QgsRubberBand(self.map_canvas, QgsWkbTypes.PolygonGeometry)
+            self.rubber_band.setColor(QColor(255, 50, 50, 200))
+            self.rubber_band.setFillColor(QColor(255, 255, 50, 160))
+            self.rubber_band.setBrushStyle(Qt.SolidPattern)
+            self.rubber_band.setLineStyle(Qt.SolidLine)
             self.rubber_band.setIcon(self.rubber_band.ICON_CIRCLE)
             self.rubber_band.setIconSize(15)
             self.rubber_band.setWidth(4)
             self.rubber_band.setBrushStyle(Qt.NoBrush)
-
-            self.feature_rubber_band = QgsRubberBand(self.map_canvas, QgsWkbTypes.PolygonGeometry)
-            self.feature_rubber_band.setColor(QColor(255, 50, 50, 200))
-            self.feature_rubber_band.setFillColor(QColor(255, 255, 50, 160))
-            self.feature_rubber_band.setBrushStyle(Qt.SolidPattern)
-            self.feature_rubber_band.setLineStyle(Qt.SolidLine)
-            self.feature_rubber_band.setWidth(4)
 
             self.create_transforms()
 
@@ -127,8 +122,6 @@ class SoLocatorFilter(QgsLocatorFilter):
     def clearPreviousResults(self):
         if self.rubber_band:
             self.rubber_band.reset(QgsWkbTypes.PointGeometry)
-        if self.feature_rubber_band:
-            self.feature_rubber_band.reset(QgsWkbTypes.PolygonGeometry)
 
         if self.current_timer is not None:
             self.current_timer.stop()
@@ -258,74 +251,11 @@ class SoLocatorFilter(QgsLocatorFilter):
                 elif 'dataproduct' in res.keys():
                     self.dbg_info("dataproduct: {}".format(res['dataproduct']))
 
-                continue
 
 
 
 
 
-
-
-
-                # available keys: ﻿['origin', 'lang', 'layer', 'staging', 'title', 'topics', 'detail', 'label', 'id']
-                for key, val in res['attrs'].items():
-                    self.dbg_info('{}: {}'.format(key, val))
-                result = QgsLocatorResult()
-                result.filter = self
-                result.displayString = res['attrs']['title']
-                result.description = res['attrs']['layer']
-                result.userData = WMSLayerResult(layer=loc['attrs']['layer'], title=loc['attrs']['title'])
-                result.icon = QgsApplication.getThemeIcon("/mActionAddWmsLayer.svg")
-                self.result_found = True
-                self.resultFetched.emit(result)
-
-
-                for key, val in loc['attrs'].items():
-                    self.dbg_info('{}: {}'.format(key, val))
-                result = QgsLocatorResult()
-                result.filter = self
-                layer = loc['attrs']['layer']
-                point = QgsPointXY(loc['attrs']['lon'], loc['attrs']['lat'])
-                if layer in self.searchable_layers:
-                    layer_display = self.searchable_layers[layer]
-                else:
-                    self.info(self.tr('Layer {} is not in the list of searchable layers.'
-                                      ' Please report issue.'.format(layer)), Qgis.Warning)
-                    layer_display = layer
-                result.group = layer_display
-                result.displayString = loc['attrs']['detail']
-                result.userData = FeatureResult(point=point,
-                                                layer=layer,
-                                                feature_id=loc['attrs']['feature_id'])
-                result.icon = QIcon(":/plugins/solocator/icons/solocator.png")
-                self.result_found = True
-                self.resultFetched.emit(result)
-
-                # locations
-                for key, val in loc['attrs'].items():
-                    self.dbg_info('{}: {}'.format(key, val))
-                group_name, group_layer = self.group_info(loc['attrs']['origin'])
-                if 'layerBodId' in loc['attrs']:
-                    self.dbg_info("layer: {}".format(loc['attrs']['layerBodId']))
-                if 'featureId' in loc['attrs']:
-                    self.dbg_info("feature: {}".format(loc['attrs']['featureId']))
-
-                result = QgsLocatorResult()
-                result.filter = self
-                result.displayString = strip_tags(loc['attrs']['label'])
-                # result.description = loc['attrs']['detail']
-                # if 'featureId' in loc['attrs']:
-                #     result.description = loc['attrs']['featureId']
-                result.group = group_name
-                result.userData = LocationResult(point=QgsPointXY(loc['attrs']['y'], loc['attrs']['x']),
-                                                 bbox=self.box2geometry(loc['attrs']['geom_st_box2d']),
-                                                 layer=group_layer,
-                                                 feature_id=loc['attrs']['featureId'] if 'featureId' in loc['attrs']
-                                                 else None,
-                                                 html_label=loc['attrs']['label'])
-                result.icon = QIcon(":/plugins/solocator/icons/solocator.png")
-                self.result_found = True
-                self.resultFetched.emit(result)
 
         except Exception as e:
             self.info(str(e), Qgis.Critical)
@@ -346,47 +276,15 @@ class SoLocatorFilter(QgsLocatorFilter):
         elif type(result.userData) == FeatureResult:
             self.fetch_feature(result.userData)
 
-        return
+    def highlight(self, geometry: QgsGeometry):
+        if geometry is None:
+            self.clearPreviousResults()
+            return
 
-        # WMS
-        url_with_params = 'contextualWMSLegend=0' \
-                          '&crs=EPSG:{crs}' \
-                          '&dpiMode=7' \
-                          '&featureCount=10' \
-                          '&format=image/png' \
-                          '&layers={layer}' \
-                          '&styles=' \
-                          '&url=http://wms.geo.admin.ch/?VERSION%3D2.0.0'\
-            .format(crs=self.crs, layer=result.userData.layer)
-        wms_layer = QgsRasterLayer(url_with_params, result.displayString, 'wms')
-        label = QLabel()
-        label.setTextFormat(Qt.RichText)
-        label.setTextInteractionFlags(Qt.TextBrowserInteraction)
-        label.setOpenExternalLinks(True)
-        if not wms_layer.isValid():
-            msg = self.tr('Cannot load WMS layer: {} ({})'.format(result.userData.title, result.userData.layer))
-            level = Qgis.Warning
-            label.setText('<a href="https://map.geo.admin.ch/'
-                          '?lang=fr&bgLayer=ch.swisstopo.pixelkarte-farbe&layers={}">'
-                          'Open layer in map.geo.admin.ch</a>'.format(result.userData.layer))
-            self.info(msg, level)
-        else:
-            msg = self.tr('WMS layer added to the map: {} ({})'.format(result.userData.title, result.userData.layer))
-            level = Qgis.Info
-            label.setText('<a href="https://map.geo.admin.ch/'
-                          '?lang=fr&bgLayer=ch.swisstopo.pixelkarte-farbe&layers={}">'
-                          'Open layer in map.geo.admin.ch</a>'.format(result.userData.layer))
+        self.rubber_band.reset(geometry.type())
+        self.rubber_band.addGeometry(geometry, None)
 
-            QgsProject.instance().addMapLayer(wms_layer)
-
-        self.message_emitted.emit(self.displayName(), msg, level, label)
-                
-    def highlight(self, point, bbox=None):
-        if bbox is None:
-            bbox = point
-        self.rubber_band.reset(QgsWkbTypes.PointGeometry)
-        self.rubber_band.addGeometry(point, None)
-        rect = bbox.boundingBox()
+        rect = geometry.boundingBox()
         rect.scale(1.1)
         self.map_canvas.setExtent(rect)
         self.map_canvas.refresh()
@@ -415,38 +313,28 @@ class SoLocatorFilter(QgsLocatorFilter):
         self.dbg_info(data['crs'])
         self.dbg_info(data['type'])
 
+        assert data['crs']['properties']['name'] == 'urn:ogc:def:crs:EPSG::2056'
+
         geometry_type = data['geometry']['type']
+        geometry = QgsGeometry()
 
         if geometry_type == 'Point':
             geometry = QgsGeometry.fromPointXY(QgsPointXY(data['geometry']['coordinates'][0],
                                                           data['geometry']['coordinates'][1]))
-            geometry.transform(self.transform_ch)
+
         elif geometry_type == 'Polygon':
             rings = data['geometry']['coordinates']
             for r in range(0, len(rings)):
                 for p in range(0, len(rings[r])):
                     rings[r][p] = QgsPointXY(rings[r][p][0], rings[r][p][1])
             geometry = QgsGeometry.fromPolygonXY(rings)
-            geometry.transform(self.transform_ch)
-            geometry.transform(self.transform_ch)
 
         else:
             self.info('SoLocator does not handle {} yet. Please contact support.'.format(geometry_type))
 
-        if 'feature' not in data or 'geometry' not in data['feature']:
-            return
+        geometry.transform(self.transform_ch)
 
-        if 'rings' in data['feature']['geometry']:
-            rings = data['feature']['geometry']['rings']
-            self.dbg_info(rings)
-            for r in range(0, len(rings)):
-                for p in range(0, len(rings[r])):
-                    rings[r][p] = QgsPointXY(rings[r][p][0], rings[r][p][1])
-            geometry = QgsGeometry.fromPolygonXY(rings)
-            geometry.transform(self.transform_ch)
-
-            self.feature_rubber_band.reset(QgsWkbTypes.PolygonGeometry)
-            self.feature_rubber_band.addGeometry(geometry, None)
+        self.highlight(geometry)
 
     def info(self, msg="", level=Qgis.Info, emit_message: bool = False):
         self.logMessage(str(msg), level)
