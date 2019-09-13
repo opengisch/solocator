@@ -27,7 +27,7 @@ from PyQt5.QtGui import QColor, QIcon
 from PyQt5.QtWidgets import QWidget, QTabWidget
 from PyQt5.QtCore import QUrl, QUrlQuery, pyqtSignal
 
-from qgis.core import Qgis, QgsLocatorFilter, QgsLocatorResult, QgsRectangle, QgsCoordinateReferenceSystem, \
+from qgis.core import Qgis, QgsLocatorFilter, QgsLocatorResult, QgsLayerTreeGroup, QgsCoordinateReferenceSystem, \
     QgsCoordinateTransform, QgsProject, QgsGeometry, QgsWkbTypes, QgsPointXY, QgsLocatorContext, QgsFeedback, \
     QgsRasterLayer
 from qgis.gui import QgsRubberBand, QgisInterface
@@ -369,14 +369,25 @@ class SoLocatorFilter(QgsLocatorFilter):
             else:
                 self.dbg_info('*** {}: {}'.format(i, v))
 
+        tree_root = QgsProject.instance().layerTreeRoot()
+        self.load_layer(data, tree_root)
+
+    """
+    Recursive method to load layers / groups
+    """
+    def load_layer(self, data: dict, tree_group: QgsLayerTreeGroup):
+        self.dbg_info(data)
         if data['type'] == LAYER_GROUP:
-            pass
-        elif 'wms_datasource' in data:
+            group = tree_group.addGroup(data['display'])
+            self.load_layer(data['sublayers'], group)
+
+        else:
             url = "contextualWMSLegend=0&crs={crs}&dpiMode=7&featureCount=10&format=image/jpeg&layers={layer}&styles&url={url}".format(
                 crs=data['crs'], layer=data['wms_datasource'][0]['name'], url=data['wms_datasource'][0]['service_url']
             )
             layer = QgsRasterLayer(url, data['display'], 'wms')
-            QgsProject.instance().addMapLayer(layer)
+            QgsProject.instance().addMapLayer(layer, False)
+            tree_group.addLayer(layer)
 
     def info(self, msg="", level=Qgis.Info, emit_message: bool = False):
         self.logMessage(str(msg), level)
