@@ -27,7 +27,7 @@ from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QAbstractItemView, QCombo
 from qgis.PyQt.uic import loadUiType
 from qgis.core import QgsLocatorFilter
 
-from solocator.settingmanager.setting_dialog import SettingDialog, UpdateMode
+from solocator.settingmanager import SettingDialog, UpdateMode, TableWidgetStringListWidget
 from solocator.core.settings import Settings
 
 DialogUi, _ = loadUiType(os.path.join(os.path.dirname(__file__), '../ui/config.ui'))
@@ -40,34 +40,50 @@ class ConfigDialog(QDialog, DialogUi, SettingDialog):
         SettingDialog.__init__(self, setting_manager=settings, mode=UpdateMode.DialogAccept)
         self.setupUi(self)
 
-        self.crs.addItem(self.tr('Use map CRS if possible, defaults to CH1903+'), 'project')
-        self.crs.addItem('CH 1903+ (EPSG:2056)', '2056')
-        self.crs.addItem('CH 1903 (EPSG:21781)', '21781')
-
         self.search_line_edit.textChanged.connect(self.filter_rows)
         self.select_all_button.pressed.connect(self.select_all)
         self.unselect_all_button.pressed.connect(lambda: self.select_all(False))
 
+        dataproducts = settings.value('dataproducts')
+        self.skipped_dataproducts.setRowCount(len(dataproducts))
+        self.skipped_dataproducts.setColumnCount(2)
+        self.skipped_dataproducts.setHorizontalHeaderLabels((self.tr('Name'), self.tr('ID')))
+        self.skipped_dataproducts.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.skipped_dataproducts.setSelectionMode(QAbstractItemView.SingleSelection)
+        r = 0
+        for _id, name in dataproducts.items():
+            item = QTableWidgetItem(name)
+            item.setData(Qt.UserRole, _id)
+            item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsUserCheckable)
+            self.skipped_dataproducts.setItem(r, 0, item)
+            self.skipped_dataproducts.setItem(r, 1, QTableWidgetItem(_id))
+            r += 1
+        self.skipped_dataproducts.horizontalHeader().setStretchLastSection(True)
+        self.skipped_dataproducts.resizeColumnsToContents()
+
         self.settings = settings
         self.init_widgets()
 
+        sd_widget: TableWidgetStringListWidget = self.setting_widget('skipped_dataproducts')
+        sd_widget.column = 0
+        sd_widget.userdata = True
+        sd_widget.invert = True
+
     def select_all(self, select:bool =True):
-        for r in range(self.feature_search_layers_list.rowCount()):
-            item = self.feature_search_layers_list.item(r, 0)
+        for r in range(self.skipped_dataproducts.rowCount()):
+            item = self.skipped_dataproducts.item(r, 0)
             item.setCheckState(Qt.Checked if select else Qt.Unchecked)
 
     @pyqtSlot(str)
     def filter_rows(self, text: str):
         if text:
-            items = self.feature_search_layers_list.findItems(text, Qt.MatchContains)
-            print(text)
-            print(len(items))
+            items = self.skipped_dataproducts.findItems(text, Qt.MatchContains)
             shown_rows = []
             for item in items:
                 shown_rows.append(item.row())
             shown_rows = list(set(shown_rows))
-            for r in range(self.feature_search_layers_list.rowCount()):
-                self.feature_search_layers_list.setRowHidden(r, r not in shown_rows)
+            for r in range(self.skipped_dataproducts.rowCount()):
+                self.skipped_dataproducts.setRowHidden(r, r not in shown_rows)
         else:
-            for r in range(self.feature_search_layers_list.rowCount()):
-                self.feature_search_layers_list.setRowHidden(r, False)
+            for r in range(self.skipped_dataproducts.rowCount()):
+                self.skipped_dataproducts.setRowHidden(r, False)

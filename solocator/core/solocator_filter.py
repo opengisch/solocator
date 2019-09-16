@@ -139,9 +139,6 @@ class SoLocatorFilter(QgsLocatorFilter):
 
     def openConfigWidget(self, parent=None):
         dlg = ConfigDialog(parent)
-        wid = dlg.findChild(QTabWidget, "tabWidget", Qt.FindDirectChildrenOnly)
-        tab = wid.findChild(QWidget, self.type.value)
-        wid.setCurrentWidget(tab)
         dlg.exec_()
 
     def create_transforms(self):
@@ -173,8 +170,8 @@ class SoLocatorFilter(QgsLocatorFilter):
             url = 'https://geo-t.so.ch/api/search/v2'
             params = {
                 'searchtext': str(search),
-                'filter': self.settings.enabled_categories(),
-                'limit': str(self.settings.value('limit'))
+                'filter': self.settings.enabled_dataproducts(),
+                'limit': str(self.settings.value('results_limit'))
 
             }
 
@@ -240,7 +237,7 @@ class SoLocatorFilter(QgsLocatorFilter):
                     self.dbg_info("dataproduct: {}".format(dp))
                     result = QgsLocatorResult()
                     result.filter = self
-                    result.displayString = 'xxxxx'+dp['display']
+                    result.displayString = dp['display']
                     result.description = dp['type']
                     result.group = 'Layers'
                     result.userData = DataProductResult(
@@ -254,7 +251,7 @@ class SoLocatorFilter(QgsLocatorFilter):
                 else:
                     continue
 
-                #result.description = data_product
+                # result.description = data_product
                 result.icon = self.dataproduct2icon(data_product)
                 self.result_found = True
                 self.resultFetched.emit(result)

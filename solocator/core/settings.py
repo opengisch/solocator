@@ -33,9 +33,9 @@ class Settings(SettingManager):
     def __init__(self):
         SettingManager.__init__(self, pluginName)
 
-        self.add_setting(Integer('limit', Scope.Global, 20))
+        self.add_setting(Integer('results_limit', Scope.Global, 20))
 
-        self.add_setting(Dictionary('categories', Scope.Global,
+        self.add_setting(Dictionary('dataproducts', Scope.Global,
                                     {'dataproduct': 'Karten & Geodaten',
                                      'ch.so.agi.gemeindegrenzen': 'Gemeinden',
                                      'ch.so.agi.av.gebaeudeadressen.gebaeudeeingaenge': 'Adressen',
@@ -46,11 +46,11 @@ class Settings(SettingManager):
                                      'ch.so.agi.av.nomenklatur.gelaendenamen': 'Geländenamen'}))
 
         # save only skipped categories so newly added categories will be enabled by default
-        self.add_setting(Stringlist('skipped_categories', Scope.Global, None))
+        self.add_setting(Stringlist('skipped_dataproducts', Scope.Global, None))
 
-    def enabled_categories(self):
-        categories = self.value('categories').keys()
-        skipped = self.value('skipped_categories')
+    def enabled_dataproducts(self):
+        categories = self.value('dataproducts').keys()
+        skipped = self.value('skipped_dataproducts')
         return ','.join(list(filter(lambda id: id not in skipped, categories)))
 
 
