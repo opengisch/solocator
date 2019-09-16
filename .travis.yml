@@ -3,8 +3,6 @@ language: python
 python:
   - 3.7
 
-if: tag IS present AND type != pull_request
-
 git:
   submodules: false
 
@@ -16,12 +14,13 @@ before_install:
 install:
   - pip install -r requirements.txt
 
-scripts:
-  - qgis-plugin-ci -v
-  - >
-    qgis-plugin-ci release ${TRAVIS_TAG}
-      --github-token ${GH_TOKEN}
-      --create-plugin-repo
+script: qgis-plugin-ci --version
+
+deploy:
+  provider: script
+  script: qgis-plugin-ci release ${TRAVIS_TAG} --github-token ${GH_TOKEN} --create-plugin-repo
+  on:
+    tags: true
 
 env:
   global:
