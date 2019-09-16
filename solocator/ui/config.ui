@@ -30,7 +30,7 @@
    <item row="2" column="0" colspan="3">
     <widget class="QGroupBox" name="feature_search_restrict">
      <property name="title">
-      <string>Restrict search to specific data products</string>
+      <string>Auf spezifische Datenprodukte beschränken</string>
      </property>
      <property name="checkable">
       <bool>false</bool>
@@ -68,7 +68,7 @@
          <bool>true</bool>
         </property>
         <property name="text">
-         <string>unselect all</string>
+         <string>Alle Abwählen</string>
         </property>
        </widget>
       </item>
@@ -101,7 +101,7 @@
    <item row="1" column="0">
     <widget class="QLabel" name="label_7">
      <property name="text">
-      <string>Maximum number of results</string>
+      <string>Maximale Anzahl Resultate</string>
      </property>
     </widget>
    </item>

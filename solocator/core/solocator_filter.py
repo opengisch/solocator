@@ -334,8 +334,11 @@ class SoLocatorFilter(QgsLocatorFilter):
                     rings[r][p] = QgsPointXY(rings[r][p][0], rings[r][p][1])
             geometry = QgsGeometry.fromPolygonXY(rings)
         else:
-            # SoLocator does not handle {} yet. Please contact support
-            self.info('SoLocator does not handle {} yet. Please contact support.'.format(geometry_type), Qgis.Warning) # ToTranslate
+            # SoLocator does not handle {geometry_type} yet. Please contact support
+            self.info('SoLocator unterstützt den Geometrietyp {geometry_type} nicht.'
+                      ' Bitte kontaktieren Sie den Support.'.format(
+                geometry_type=geometry_type), Qgis.Warning
+            )
 
         geometry.transform(self.transform_ch)
         self.highlight(geometry)

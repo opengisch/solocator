@@ -4,6 +4,9 @@
 
 Integration in die QGIS Suche für dieGeodateninfrastruktur im Kanton Solothurn. Über dieses Plugin können Layer, Flurnamen, Adressen und andere Objekte im Kanton Solothurn gesucht und lokalisiert werden.
 
+### Install
+
+https://github.com/opengisch/solocator/releases
 
 ### API
 
