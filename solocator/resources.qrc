@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/plugins/solocator">
         <file>icons/solocator.png</file>
+        <file>icons/results/adresse.svg</file>
+        <file>icons/results/gelaende_flurname.svg</file>
     </qresource>
 </RCC>

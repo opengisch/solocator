@@ -233,6 +233,7 @@ class SoLocatorFilter(QgsLocatorFilter):
                         id_field_type=f['id_field_type'],
                         feature_id=f['feature_id']
                     )
+                    data_product = f['dataproduct_id']
 
                 elif 'dataproduct' in res.keys():
                     dp = res['dataproduct']
@@ -248,11 +249,13 @@ class SoLocatorFilter(QgsLocatorFilter):
                         dset_info=dp['dset_info'],
                         sublayers=dp.get('sublayers', None)
                     )
+                    data_product = dp['dataproduct_id']
 
                 else:
                     continue
 
-                result.icon = QIcon(":/plugins/solocator/icons/solocator.png")
+                #result.description = data_product
+                result.icon = self.dataproduct2icon(data_product)
                 self.result_found = True
                 self.resultFetched.emit(result)
 
@@ -396,6 +399,9 @@ class SoLocatorFilter(QgsLocatorFilter):
                 QgsProject.instance().addMapLayer(layer, False)
                 tree_group.addLayer(layer)
 
+                if 'postgis_datasource' in data:
+                    self.dbg_info(data['postgis_datasource'])
+
     def info(self, msg="", level=Qgis.Info, emit_message: bool = False):
         self.logMessage(str(msg), level)
         if emit_message:
@@ -404,4 +410,14 @@ class SoLocatorFilter(QgsLocatorFilter):
     def dbg_info(self, msg=""):
         if DEBUG:
             self.info(msg)
+
+    def dataproduct2icon(self, dataproduct: str) -> QIcon:
+        if dataproduct.startswith('ch.so.agi.av.gebaeudeadressen'):
+            return QIcon(":/plugins/solocator/icons/results/adresse.svg")
+        elif dataproduct.startswith('ch.so.agi.av.nomenklatur.flurnamen'):
+            return QIcon(":/plugins/solocator/icons/results/gelaende_flurname.svg")
+        else:
+            return QIcon(":/plugins/solocator/icons/solocator.png")
+
+
 
