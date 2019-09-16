@@ -18,9 +18,10 @@ install:
 
 scripts:
   - qgis-plugin-ci -v
-  - qgis-plugin-ci release ${TRAVIS_TAG}
-          --github-token ${GH_TOKEN}
-          --create-plugin-repo
+  - >
+    qgis-plugin-ci release ${TRAVIS_TAG}
+      --github-token ${GH_TOKEN}
+      --create-plugin-repo
 
 env:
   global:
