@@ -20,12 +20,11 @@ scripts:
   - qgis-plugin-ci -v
   - qgis-plugin-ci release ${TRAVIS_TAG}
           --github-token ${GH_TOKEN}
-          --osgeo-username ${OSGEO_USERNAME}
-          --osgeo-password ${OSGEO_PASSWORD}
+          --create-plugin-repo
 
 env:
   global:
     # OSGEO_USERNAME
     # OSGEO_PASSWORD
-    # TX_TOKEN
     # GH_TOKEN
+    - secure: "OKGC7+vnPmb8kPPr9ikCI2gdyXlA81XCnYgRdpwAmD20mMHoaXyf6yJQ/z6/lgfEYa/saN5jheAOxZETDeDVP7curBqUWJ2RR5qxMYVJFQpCLjPDrDbdr0IuFGzMQt9Krrko1silZRUtR4hBzjogfQr+wSV3hVpuFGwfrgow690AIaaWqh07LTvr2WyuN7oPKdJMOpeEOSk37xyDAkGnYQwwj3Lc+YO2Uj4yXGnFa8te3yzJ2sGX06A9j0MuEt33wUq+a3vBK+QuDXWloja9yhNIZeIW3opi94P9AIjYxxXxqbJAv6UScFGJpbu3eLvI0v/hGAz4QMiYlbmbQ+pxqXabVF1ANcfl+/5XivWzryg3T8gyXX4ZNvWWP2uObH9u3gKefL3p7WzyI7aEi97k0ugE8somaMWe1lMM3wdXlTblEuqYvgpMPvhQO2WtMf6cg64coEaXeFts6hm71Kh8KjIuPCTdI+Ojn2+aM5xndUZO6qwZL9PdlCg1xGwXBYKfVGDObbG4wCuw4jR1fcwqkAkFUvxtpPxbzBJzJGvlU6vGt9XKbZvdqC+U2WGbnLzB9MJ67ymlflWTvki/NanS/g9yuHDR6QqkXOJ2MAcyazp6o1rbgCtIivhWu6qXki2InJetO3iak0kvHOsMnVtMWvwON+Fe2zdccn8juCSmljU="

@@ -413,6 +413,8 @@ class SoLocatorFilter(QgsLocatorFilter):
             return QIcon(":/plugins/solocator/icons/results/adresse.svg")
         elif dataproduct.startswith('ch.so.agi.av.nomenklatur.flurnamen'):
             return QIcon(":/plugins/solocator/icons/results/gelaende_flurname.svg")
+        elif dataproduct.startswith('ch.so.agi.av.grundstuecke'):
+            return QIcon(":/plugins/solocator/icons/results/grundstuecke.svg")
         else:
             return QIcon(":/plugins/solocator/icons/solocator.png")
 
