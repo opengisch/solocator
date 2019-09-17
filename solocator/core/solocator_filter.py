@@ -29,7 +29,7 @@ from PyQt5.QtWidgets import QWidget, QApplication
 from qgis.core import Qgis, QgsLocatorFilter, QgsLocatorResult, QgsLayerTreeGroup, QgsCoordinateReferenceSystem, \
     QgsCoordinateTransform, QgsProject, QgsGeometry, QgsWkbTypes, QgsPointXY, QgsLocatorContext, QgsFeedback, \
     QgsRasterLayer
-from qgis.gui import QgsRubberBand, QgisInterface
+from qgis.gui import QgsRubberBand, QgisInterface, QgsMapCanvas
 
 from solocator.core.network_access_manager import NetworkAccessManager, RequestsException, RequestsExceptionUserAbort
 from solocator.core.settings import Settings
@@ -86,7 +86,7 @@ class SoLocatorFilter(QgsLocatorFilter):
 
         #  following properties will only be used in main thread
         self.rubber_band = None
-        self.map_canvas = None
+        self.map_canvas: QgsMapCanvas = None
         self.transform_ch = None
         self.current_timer = None
         self.result_found = False
@@ -287,7 +287,12 @@ class SoLocatorFilter(QgsLocatorFilter):
         self.rubber_band.addGeometry(geometry, None)
 
         rect = geometry.boundingBox()
-        rect.scale(1.1)
+        if not self.settings.value('keep_scale'):
+            if rect.isEmpty():
+                current_extent = self.map_canvas.extent()
+                rect = current_extent.scaled(self.settings.value('point_scale')/self.map_canvas.scale(), rect.center())
+            else:
+                rect.scale(4)
         self.map_canvas.setExtent(rect)
         self.map_canvas.refresh()
 
