@@ -20,7 +20,9 @@
 
 import json
 import os
-import sys, traceback
+import sys
+import traceback
+from copy import deepcopy
 
 from PyQt5.QtCore import Qt, QTimer, QUrl, QUrlQuery, pyqtSignal
 from PyQt5.QtGui import QColor, QIcon
@@ -368,43 +370,57 @@ class SoLocatorFilter(QgsLocatorFilter):
 
         data = json.loads(response.content.decode('utf-8'))
 
-        # debug
-        for i, v in data.items():
-            if i in ('qml', 'contacts'): continue
-            if i == 'sublayers':
-                for sublayer in data['sublayers']:
-                    for j, u in sublayer.items():
-                        if j in ('qml', 'contacts'): continue
-                        self.dbg_info('*** sublayer {}: {}'.format(j, u))
-            else:
-                self.dbg_info('*** {}: {}'.format(i, v))
+        # # debug
+        # for i, v in data.items():
+        #     if i in ('qml', 'contacts'): continue
+        #     if i == 'sublayers':
+        #         for sublayer in data['sublayers']:
+        #             for j, u in sublayer.items():
+        #                 if j in ('qml', 'contacts'): continue
+        #                 self.dbg_info('*** sublayer {}: {}'.format(j, u))
+        #     else:
+        #         self.dbg_info('*** {}: {}'.format(i, v))
 
-        tree_root = QgsProject.instance().layerTreeRoot()
-        self.load_layer(data, tree_root)
+        try:
+            (insertion_group, insertion_index) = self.iface.layerTreeInsertionPoint()
+        except AttributeError:
+            # backward compatibility for QGIS < 3.10
+            from .layertree import layerTreeInsertionPoint
+            (insertion_group, insertion_index) = layerTreeInsertionPoint(self.iface)
+        self.dbg_info("insertion point: {} {}".format(insertion_group.name(), insertion_index))
+        self.load_layer(data, insertion_group, insertion_index)
 
     """
     Recursive method to load layers / groups
     """
-    def load_layer(self, data: dict, tree_group: QgsLayerTreeGroup):
+    def load_layer(self, data: dict, insertion_group: QgsLayerTreeGroup, insertion_index: int):
+        self.dbg_info("load_layer call in {} at index {}".format(insertion_group.name(), insertion_index))
         if type(data) is list:
             for d in data:
-                self.load_layer(d, tree_group)
+                self.load_layer(d, insertion_group, insertion_index)
         else:
-            self.dbg_info('*** load: {}'.format(data.keys()))
+            # self.dbg_info('*** load: {}'.format(data.keys()))
             if data['type'] == LAYER_GROUP:
-                group = tree_group.addGroup(data['display'])
-                self.load_layer(data['sublayers'], group)
+                if insertion_index:
+                    group = insertion_group.insertGroup(insertion_index, data['display'])
+                else:
+                    group = insertion_group.addGroup(data['display'])
+                self.load_layer(data['sublayers'], group, None)
             else:
                 self.dbg_info('*** load: {}'.format(data['wms_datasource']))
                 ds = data['wms_datasource']
                 if type(ds) is list and len(ds) == 1:
                     ds = ds[0]
-                url = "contextualWMSLegend=0&crs={crs}&dpiMode=7&featureCount=10&format=image/jpeg&layers={layer}&styles&url={url}".format(
+                url = "contextualWMSLegend=0&crs={crs}&dpiMode=7&featureCount=10&format=image/png&layers={layer}&styles&url={url}".format(
                     crs=data['crs'], layer=ds['name'], url=ds['service_url']
                 )
                 layer = QgsRasterLayer(url, data['display'], 'wms')
                 QgsProject.instance().addMapLayer(layer, False)
-                tree_group.addLayer(layer)
+                self.dbg_info("inserting layer in {} at index {}".format(insertion_group.name(), insertion_index))
+                if insertion_index:
+                    insertion_group.insertLayer(insertion_index, layer)
+                else:
+                    insertion_group.addLayer(layer)
 
                 if 'postgis_datasource' in data:
                     self.dbg_info(data['postgis_datasource'])
