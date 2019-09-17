@@ -22,7 +22,6 @@ import json
 import os
 import sys
 import traceback
-from copy import deepcopy
 
 from PyQt5.QtCore import Qt, QTimer, QUrl, QUrlQuery, pyqtSignal
 from PyQt5.QtGui import QColor, QIcon
@@ -37,6 +36,11 @@ from solocator.core.network_access_manager import NetworkAccessManager, Requests
 from solocator.core.settings import Settings
 from solocator.gui.config_dialog import ConfigDialog
 from solocator.solocator_plugin import DEBUG
+
+try:
+    from qgis.gui.QgsLayerTreeRegistryBridge import InsertionPoint
+except ModuleNotFoundError:
+    from .layertree import InsertionPoint, layerTreeInsertionPoint
 
 import solocator.resources_rc  # NOQA
 
@@ -382,30 +386,30 @@ class SoLocatorFilter(QgsLocatorFilter):
         #         self.dbg_info('*** {}: {}'.format(i, v))
 
         try:
-            (insertion_group, insertion_index) = self.iface.layerTreeInsertionPoint()
+            insertion_point = self.iface.layerTreeInsertionPoint()
         except AttributeError:
             # backward compatibility for QGIS < 3.10
-            from .layertree import layerTreeInsertionPoint
-            (insertion_group, insertion_index) = layerTreeInsertionPoint(self.iface)
-        self.dbg_info("insertion point: {} {}".format(insertion_group.name(), insertion_index))
-        self.load_layer(data, insertion_group, insertion_index)
+            insertion_point = layerTreeInsertionPoint(self.iface)
+        self.dbg_info("insertion point: {} {}".format(insertion_point.parent.name(), insertion_point.position))
+        self.load_layer(data, insertion_point)
 
     """
     Recursive method to load layers / groups
     """
-    def load_layer(self, data: dict, insertion_group: QgsLayerTreeGroup, insertion_index: int):
-        self.dbg_info("load_layer call in {} at index {}".format(insertion_group.name(), insertion_index))
+    def load_layer(self, data: dict, insertion_point):
+        self.dbg_info("load_layer call in {} at position {}".format(insertion_point.parent.name(), insertion_point.position))
         if type(data) is list:
             for d in data:
-                self.load_layer(d, insertion_group, insertion_index)
+                self.load_layer(d, insertion_point)
         else:
             # self.dbg_info('*** load: {}'.format(data.keys()))
             if data['type'] == LAYER_GROUP:
-                if insertion_index:
-                    group = insertion_group.insertGroup(insertion_index, data['display'])
+                if insertion_point.position >= 0:
+                    group = insertion_point.parent.insertGroup(insertion_point.position, data['display'])
                 else:
-                    group = insertion_group.addGroup(data['display'])
-                self.load_layer(data['sublayers'], group, None)
+                    group = insertion_point.parent.addGroup(data['display'])
+
+                self.load_layer(data['sublayers'], InsertionPoint(group, -1))
             else:
                 self.dbg_info('*** load: {}'.format(data['wms_datasource']))
                 ds = data['wms_datasource']
@@ -416,11 +420,11 @@ class SoLocatorFilter(QgsLocatorFilter):
                 )
                 layer = QgsRasterLayer(url, data['display'], 'wms')
                 QgsProject.instance().addMapLayer(layer, False)
-                self.dbg_info("inserting layer in {} at index {}".format(insertion_group.name(), insertion_index))
-                if insertion_index:
-                    insertion_group.insertLayer(insertion_index, layer)
+                self.dbg_info("inserting layer in {} at position {}".format(insertion_point.parent.name(), insertion_point.position))
+                if insertion_point.position >= 0:
+                    insertion_point.parent.insertLayer(insertion_point.position, layer)
                 else:
-                    insertion_group.addLayer(layer)
+                    insertion_point.parent.addLayer(layer)
 
                 if 'postgis_datasource' in data:
                     self.dbg_info(data['postgis_datasource'])

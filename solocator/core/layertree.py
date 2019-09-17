@@ -1,6 +1,20 @@
 
-from qgis.core import QgsLayerTree, QgsLayerTreeUtils
+from qgis.core import QgsLayerTree, QgsLayerTreeGroup, QgsLayerTreeUtils
 from qgis.gui import QgisInterface
+
+
+class InsertionPoint:
+    def __init__(self, parent: QgsLayerTreeGroup, position: int):
+        self._parent = parent
+        self._position = position
+
+    @property
+    def parent(self):
+        return self._parent
+
+    @property
+    def position(self):
+        return self._position
 
 
 def layerTreeInsertionPoint(iface: QgisInterface) -> tuple:
@@ -24,7 +38,7 @@ def layerTreeInsertionPoint(iface: QgisInterface) -> tuple:
                 # if the group is embedded go to the first non-embedded group, at worst the top level item
                 insert_group = QgsLayerTreeUtils.firstGroupWithoutCustomProperty(currentNode, "embedded")
 
-                return insert_group, 0
+                return  InsertionPoint(insert_group, 0)
 
             # otherwise just set the insertion point in front of the current node
             parentNode = currentNode.parent()
@@ -35,4 +49,4 @@ def layerTreeInsertionPoint(iface: QgisInterface) -> tuple:
                 if parentNode != insert_group:
                     index = 0
 
-    return insert_group, index
+    return InsertionPoint(insert_group, index)
