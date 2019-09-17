@@ -22,10 +22,9 @@ import json
 import os
 import sys, traceback
 
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt, QTimer, QUrl, QUrlQuery, pyqtSignal
 from PyQt5.QtGui import QColor, QIcon
-from PyQt5.QtWidgets import QWidget, QTabWidget
-from PyQt5.QtCore import QUrl, QUrlQuery, pyqtSignal
+from PyQt5.QtWidgets import QWidget, QApplication
 
 from qgis.core import Qgis, QgsLocatorFilter, QgsLocatorResult, QgsLayerTreeGroup, QgsCoordinateReferenceSystem, \
     QgsCoordinateTransform, QgsProject, QgsGeometry, QgsWkbTypes, QgsPointXY, QgsLocatorContext, QgsFeedback, \
@@ -267,12 +266,15 @@ class SoLocatorFilter(QgsLocatorFilter):
         # this is run in the main thread, i.e. map_canvas is not None
         self.clearPreviousResults()
 
+        ctrl_clicked = Qt.ControlModifier == QApplication.instance().queryKeyboardModifiers()
+        self.dbg_info(("CTRL pressed: {}".format(ctrl_clicked)))
+
         if type(result.userData) == NoResult:
             pass
         elif type(result.userData) == FeatureResult:
             self.fetch_feature(result.userData)
         elif type(result.userData) == DataProductResult:
-            self.fetch_data_product(result.userData)
+            self.fetch_data_product(result.userData, ctrl_clicked)
         else:
             self.info('Incorrect result. Please contact support', Qgis.Critical)
 
@@ -343,7 +345,7 @@ class SoLocatorFilter(QgsLocatorFilter):
         geometry.transform(self.transform_ch)
         self.highlight(geometry)
 
-    def fetch_data_product(self, product: DataProductResult):
+    def fetch_data_product(self, product: DataProductResult, open_dialog: bool):
         self.dbg_info(product)
         # see https://geo-t.so.ch/api/dataproduct/v1/api/
         url = 'https://geo-t.so.ch/api/dataproduct/v1/{dataproduct_id}'.format(dataproduct_id=product.dataproduct_id)
