@@ -11,9 +11,22 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Swiss locator filter configuration</string>
+   <string>SoLocator filter configuration</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
+   <item row="5" column="0" colspan="3">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QSpinBox" name="results_limit"/>
+   </item>
    <item row="1" column="2">
     <spacer name="horizontalSpacer_3">
      <property name="orientation">
@@ -27,7 +40,7 @@
      </property>
     </spacer>
    </item>
-   <item row="2" column="0" colspan="3">
+   <item row="4" column="0" colspan="3">
     <widget class="QGroupBox" name="feature_search_restrict">
      <property name="title">
       <string>Auf spezifische Datenprodukte beschränken</string>
@@ -39,7 +52,17 @@
       <bool>false</bool>
      </property>
      <layout class="QGridLayout" name="gridLayout_4">
-      <item row="0" column="3">
+      <item row="1" column="0">
+       <widget class="QPushButton" name="select_all_button">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="text">
+         <string>select all</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
        <widget class="QgsFilterLineEdit" name="search_line_edit">
         <property name="enabled">
          <bool>true</bool>
@@ -52,27 +75,7 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="0">
-       <widget class="QPushButton" name="select_all_button">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="text">
-         <string>select all</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QPushButton" name="unselect_all_button">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="text">
-         <string>Alle Abwählen</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2">
+      <item row="1" column="2">
        <spacer name="horizontalSpacer">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -85,7 +88,17 @@
         </property>
        </spacer>
       </item>
-      <item row="1" column="0" colspan="4">
+      <item row="1" column="1">
+       <widget class="QPushButton" name="unselect_all_button">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="text">
+         <string>Alle Abwählen</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0" colspan="4">
        <widget class="QTableWidget" name="skipped_dataproducts">
         <property name="enabled">
          <bool>true</bool>
@@ -95,8 +108,19 @@
      </layout>
     </widget>
    </item>
-   <item row="1" column="1">
-    <widget class="QSpinBox" name="results_limit"/>
+   <item row="2" column="0" colspan="3">
+    <widget class="QCheckBox" name="keep_scale">
+     <property name="text">
+      <string>Keep scale of map canvas when identifying a feature</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="scale_label">
+     <property name="text">
+      <string>Scale when identifying points</string>
+     </property>
+    </widget>
    </item>
    <item row="1" column="0">
     <widget class="QLabel" name="label_7">
@@ -105,15 +129,8 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="0" colspan="3">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-     </property>
-    </widget>
+   <item row="3" column="1">
+    <widget class="QgsScaleWidget" name="point_scale" native="true"/>
    </item>
   </layout>
  </widget>
@@ -122,6 +139,12 @@
    <class>QgsFilterLineEdit</class>
    <extends>QLineEdit</extends>
    <header>qgsfilterlineedit.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QgsScaleWidget</class>
+   <extends>QWidget</extends>
+   <header>qgis.gui</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -24,7 +24,7 @@
 #
 # ---------------------------------------------------------------------
 
-from solocator.settingmanager import SettingManager, Scope, Bool, String, Stringlist, Integer, Enum, Dictionary
+from solocator.settingmanager import SettingManager, Scope, Bool, Stringlist, Integer, Double, Dictionary
 
 pluginName = "solocator"
 
@@ -34,6 +34,8 @@ class Settings(SettingManager):
         SettingManager.__init__(self, pluginName)
 
         self.add_setting(Integer('results_limit', Scope.Global, 20))
+        self.add_setting(Bool('keep_scale', Scope.Global, True))
+        self.add_setting(Double('point_scale', Scope.Global, 10000))
 
         self.add_setting(Dictionary('dataproducts', Scope.Global,
                                     {'dataproduct': 'Karten & Geodaten',

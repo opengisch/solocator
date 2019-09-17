@@ -43,6 +43,8 @@ class ConfigDialog(QDialog, DialogUi, SettingDialog):
         self.search_line_edit.textChanged.connect(self.filter_rows)
         self.select_all_button.pressed.connect(self.select_all)
         self.unselect_all_button.pressed.connect(lambda: self.select_all(False))
+        self.keep_scale.toggled.connect(self.point_scale.setDisabled)
+        self.keep_scale.toggled.connect(self.scale_label.setDisabled)
 
         dataproducts = settings.value('dataproducts')
         self.skipped_dataproducts.setRowCount(len(dataproducts))
