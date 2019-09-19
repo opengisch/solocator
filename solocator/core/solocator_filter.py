@@ -236,6 +236,7 @@ class SoLocatorFilter(QgsLocatorFilter):
                         feature_id=f['feature_id']
                     )
                     data_product = f['dataproduct_id']
+                    data_type = None
 
                 elif 'dataproduct' in res.keys():
                     dp = res['dataproduct']
@@ -251,13 +252,14 @@ class SoLocatorFilter(QgsLocatorFilter):
                         dset_info=dp['dset_info'],
                         sublayers=dp.get('sublayers', None)
                     )
-                    data_product = dp['dataproduct_id']
+                    data_product = 'dataproduct'
+                    data_type = dp['type']
 
                 else:
                     continue
 
                 # result.description = data_product
-                result.icon = self.dataproduct2icon(data_product)
+                result.icon = self.dataproduct2icon(data_product, data_type)
                 self.result_found = True
                 self.resultFetched.emit(result)
 
@@ -438,15 +440,32 @@ class SoLocatorFilter(QgsLocatorFilter):
         if DEBUG:
             self.info(msg)
 
-    def dataproduct2icon(self, dataproduct: str) -> QIcon:
-        if dataproduct.startswith('ch.so.agi.av.gebaeudeadressen'):
+    def dataproduct2icon(self, dataproduct: str, type: str) -> QIcon:
+        if dataproduct == 'dataproduct':
+            if type == 'layergroup':
+                return QIcon(":/plugins/solocator/icons/results/layergroup_open.svg")
+            else:
+                return QIcon(":/plugins/solocator/icons/results/ebene.svg")
+
+        if dataproduct.startswith('ch.so.agi.av.gebaeudeadressen.gebaeudeeingaenge'):
             return QIcon(":/plugins/solocator/icons/results/adresse.svg")
-        elif dataproduct.startswith('ch.so.agi.av.nomenklatur.flurnamen'):
-            return QIcon(":/plugins/solocator/icons/results/gelaende_flurname.svg")
-        elif dataproduct.startswith('ch.so.agi.av.grundstuecke'):
+
+        if dataproduct.startswith('ch.so.agi.gemeindegrenzen'):
+            return QIcon(":/plugins/solocator/icons/results/gemeinde.svg")
+
+        if dataproduct.startswith('ch.so.agi.av.bodenbedeckung'):
+            return QIcon(":/plugins/solocator/icons/results/ort_punkt.svg")
+
+        if dataproduct.startswith('ch.so.agi.av.grundstuecke'):
             return QIcon(":/plugins/solocator/icons/results/grundstuecke.svg")
-        else:
-            return QIcon(":/plugins/solocator/icons/solocator.png")
+
+        if dataproduct.startswith('ch.so.agi.av.nomenklatur.flurnamen') or \
+                dataproduct.startswith('ch.so.agi.av.nomenklatur.gelaendename'):
+            return QIcon(":/plugins/solocator/icons/results/gelaende_flurname.svg")
+
+
+
+        return QIcon(":/plugins/solocator/icons/solocator.png")
 
 
 
