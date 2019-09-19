@@ -228,7 +228,6 @@ class SoLocatorFilter(QgsLocatorFilter):
                     self.dbg_info("feature: {}".format(f))
                     result.displayString = f['display']
                     result.group = 'Features'
-                    result.description = None
                     result.userData = FeatureResult(
                         dataproduct_id=f['dataproduct_id'],
                         id_field_name=f['id_field_name'],
@@ -244,7 +243,6 @@ class SoLocatorFilter(QgsLocatorFilter):
                     result = QgsLocatorResult()
                     result.filter = self
                     result.displayString = dp['display']
-                    result.description = dp['type']
                     result.group = 'Layers'
                     result.userData = DataProductResult(
                         type=dp['type'],
@@ -258,8 +256,7 @@ class SoLocatorFilter(QgsLocatorFilter):
                 else:
                     continue
 
-                # result.description = data_product
-                result.icon = self.dataproduct2icon(data_product, data_type)
+                result.icon, result.description = self.dataproduct2icon_description(data_product, data_type)
                 self.result_found = True
                 self.resultFetched.emit(result)
 
@@ -395,10 +392,10 @@ class SoLocatorFilter(QgsLocatorFilter):
         self.dbg_info("insertion point: {} {}".format(insertion_point.parent.name(), insertion_point.position))
         self.load_layer(data, insertion_point)
 
-    """
-    Recursive method to load layers / groups
-    """
-    def load_layer(self, data: dict, insertion_point):
+    def load_layer(self, data: dict, insertion_point: InsertionPoint):
+        """
+        Recursive method to load layers / groups
+        """
         self.dbg_info("load_layer call in {} at position {}".format(insertion_point.parent.name(), insertion_point.position))
         if type(data) is list:
             for d in data:
@@ -440,32 +437,54 @@ class SoLocatorFilter(QgsLocatorFilter):
         if DEBUG:
             self.info(msg)
 
-    def dataproduct2icon(self, dataproduct: str, type: str) -> QIcon:
+    def dataproduct2icon_description(self, dataproduct: str, type: str) -> QIcon:
+
+        DATAPRODUCT_TYPE_TRANSLATION = {
+            'datasetview': 'Layer',
+            'facadelayer': 'Fassadenlayer',
+            'background': 'Hintergrundlayer'
+        }
+
+        label = None
+        icon = QIcon(":/plugins/solocator/icons/solocator.png")
+
         if dataproduct == 'dataproduct':
-            if type == 'layergroup':
-                return QIcon(":/plugins/solocator/icons/results/layergroup_open.svg")
+            if type == LAYER_GROUP:
+                label = 'Layergruppe'
+                icon = QIcon(":/plugins/solocator/icons/results/layergroup_open.svg")
             else:
-                return QIcon(":/plugins/solocator/icons/results/ebene.svg")
+                label = DATAPRODUCT_TYPE_TRANSLATION[type]
+                icon = QIcon(":/plugins/solocator/icons/results/ebene.svg")
 
-        if dataproduct.startswith('ch.so.agi.av.gebaeudeadressen.gebaeudeeingaenge'):
-            return QIcon(":/plugins/solocator/icons/results/adresse.svg")
+        elif dataproduct.startswith('ch.so.agi.av.gebaeudeadressen.gebaeudeeingaenge'):
+            label = 'Adresse'
+            icon = QIcon(":/plugins/solocator/icons/results/adresse.svg")
 
-        if dataproduct.startswith('ch.so.agi.gemeindegrenzen'):
-            return QIcon(":/plugins/solocator/icons/results/gemeinde.svg")
+        elif dataproduct.startswith('ch.so.agi.gemeindegrenzen'):
+            label = 'Gemeinde'
+            icon = QIcon(":/plugins/solocator/icons/results/gemeinde.svg")
 
-        if dataproduct.startswith('ch.so.agi.av.bodenbedeckung'):
-            return QIcon(":/plugins/solocator/icons/results/ort_punkt.svg")
+        elif dataproduct.startswith('ch.so.agi.av.bodenbedeckung'):
+            label = 'Gebäude (EGID)'
+            icon = QIcon(":/plugins/solocator/icons/results/ort_punkt.svg")
 
-        if dataproduct.startswith('ch.so.agi.av.grundstuecke'):
-            return QIcon(":/plugins/solocator/icons/results/grundstuecke.svg")
+        elif dataproduct.startswith('ch.so.agi.av.grundstuecke.projektierte'):
+            label = 'Grundstück projektiert'
+            icon = QIcon(":/plugins/solocator/icons/results/grundstuecke.svg")
 
-        if dataproduct.startswith('ch.so.agi.av.nomenklatur.flurnamen') or \
-                dataproduct.startswith('ch.so.agi.av.nomenklatur.gelaendename'):
-            return QIcon(":/plugins/solocator/icons/results/gelaende_flurname.svg")
+        elif dataproduct.startswith('ch.so.agi.av.grundstuecke.rechtskraeftig'):
+            label = 'Grundstück rechtskräftig'
+            icon = QIcon(":/plugins/solocator/icons/results/grundstuecke.svg")
 
+        elif dataproduct.startswith('ch.so.agi.av.nomenklatur.flurnamen'):
+            label = 'Flurname'
+            icon = QIcon(":/plugins/solocator/icons/results/gelaende_flurname.svg")
 
+        elif dataproduct.startswith('ch.so.agi.av.nomenklatur.gelaendename'):
+            label = 'Geländename'
+            icon = QIcon(":/plugins/solocator/icons/results/gelaende_flurname.svg")
 
-        return QIcon(":/plugins/solocator/icons/solocator.png")
+        return icon, label
 
 
 
