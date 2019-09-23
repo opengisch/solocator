@@ -60,9 +60,10 @@ class FeatureResult:
 
 
 class DataProductResult:
-    def __init__(self, type, dataproduct_id, dset_info, sublayers):
+    def __init__(self, type, dataproduct_id, display, dset_info, sublayers):
         self.type = type
         self.dataproduct_id = dataproduct_id
+        self.display = display
         self.dset_info = dset_info
         self.sublayers = sublayers
 
@@ -83,7 +84,7 @@ class SoLocatorFilter(QgsLocatorFilter):
     def __init__(self, iface: QgisInterface = None):
         """"
         :param iface: QGIS interface, given when on the main thread (which will display/trigger results), None otherwise
-        :param crs: if iface is not given, it shall be provided, see clone()
+        :param crs: if treeView is not given, it shall be provided, see clone()
         """
         super().__init__()
 
@@ -247,6 +248,7 @@ class SoLocatorFilter(QgsLocatorFilter):
                     result.userData = DataProductResult(
                         type=dp['type'],
                         dataproduct_id=dp['dataproduct_id'],
+                        display=dp['display'],
                         dset_info=dp['dset_info'],
                         sublayers=dp.get('sublayers', None)
                     )
@@ -388,7 +390,7 @@ class SoLocatorFilter(QgsLocatorFilter):
             insertion_point = self.iface.layerTreeInsertionPoint()
         except AttributeError:
             # backward compatibility for QGIS < 3.10
-            insertion_point = layerTreeInsertionPoint(self.iface)
+            insertion_point = layerTreeInsertionPoint(self.iface.layerTreeView())
         self.dbg_info("insertion point: {} {}".format(insertion_point.parent.name(), insertion_point.position))
         self.load_layer(data, insertion_point)
 
