@@ -84,7 +84,6 @@ class SoLocatorFilter(QgsLocatorFilter):
     def __init__(self, iface: QgisInterface = None):
         """"
         :param iface: QGIS interface, given when on the main thread (which will display/trigger results), None otherwise
-        :param crs: if treeView is not given, it shall be provided, see clone()
         """
         super().__init__()
 
