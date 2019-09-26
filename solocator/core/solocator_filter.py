@@ -37,6 +37,8 @@ from solocator.core.settings import Settings
 from solocator.gui.config_dialog import ConfigDialog
 from solocator.solocator_plugin import DEBUG
 
+DEFAULT_CRS = 'EPSG:2056'
+
 try:
     from qgis.gui.QgsLayerTreeRegistryBridge import InsertionPoint
 except ModuleNotFoundError:
@@ -416,7 +418,7 @@ class SoLocatorFilter(QgsLocatorFilter):
                 if type(ds) is list and len(ds) == 1:
                     ds = ds[0]
                 url = "contextualWMSLegend=0&crs={crs}&dpiMode=7&featureCount=10&format=image/png&layers={layer}&styles&url={url}".format(
-                    crs=data['crs'], layer=ds['name'], url=ds['service_url']
+                    crs=data.get('crs', DEFAULT_CRS), layer=ds['name'], url=ds['service_url']
                 )
                 layer = QgsRasterLayer(url, data['display'], 'wms')
                 QgsProject.instance().addMapLayer(layer, False)
