@@ -27,10 +27,10 @@ from PyQt5.QtCore import Qt, QTimer, QUrl, QUrlQuery, pyqtSignal
 from PyQt5.QtGui import QColor, QIcon
 from PyQt5.QtWidgets import QWidget, QApplication
 
-from qgis.core import Qgis, QgsLocatorFilter, QgsLocatorResult, QgsLayerTreeGroup, QgsCoordinateReferenceSystem, \
+from qgis.core import Qgis, QgsLocatorFilter, QgsLocatorResult, QgsCoordinateReferenceSystem, \
     QgsCoordinateTransform, QgsProject, QgsGeometry, QgsWkbTypes, QgsPointXY, QgsLocatorContext, QgsFeedback, \
     QgsRasterLayer
-from qgis.gui import QgsRubberBand, QgisInterface, QgsMapCanvas
+from qgis.gui import QgsRubberBand, QgisInterface, QgsMapCanvas, QgsFilterLineEdit
 
 from solocator.core.network_access_manager import NetworkAccessManager, RequestsException, RequestsExceptionUserAbort
 from solocator.core.settings import Settings
@@ -39,6 +39,8 @@ from solocator.solocator_plugin import DEBUG
 
 DEFAULT_CRS = 'EPSG:2056'
 
+# Compatibility for QGIS < 3.10
+# TODO: remove
 try:
     from qgis.gui.QgsLayerTreeRegistryBridge import InsertionPoint
 except ModuleNotFoundError:
@@ -321,7 +323,16 @@ class SoLocatorFilter(QgsLocatorFilter):
         search_text = '{prefix} {filter_word}: {search}'.format(
             prefix=self.activePrefix(), filter_word=filter_result.filter_word, search=filter_result.search
         )
-        self.iface.locatorSearch(search_text)
+        # Compatibility for QGIS < 3.10
+        # TODO: remove
+        try:
+            self.iface.locatorSearch(search_text)
+        except AttributeError:
+            for w in self.iface.mainWindow().findChildren(QgsFilterLineEdit):
+                if hasattr(w.parent(), 'search') and hasattr(w.parent(), 'invalidateResults'):
+                    w.setText(search_text)
+                    return
+            raise NameError('Locator not found')
 
     def highlight(self, geometry: QgsGeometry):
         self.clearPreviousResults()
@@ -439,6 +450,7 @@ class SoLocatorFilter(QgsLocatorFilter):
             insertion_point = self.iface.layerTreeInsertionPoint()
         except AttributeError:
             # backward compatibility for QGIS < 3.10
+            # TODO: remove
             insertion_point = layerTreeInsertionPoint(self.iface.layerTreeView())
         self.dbg_info("insertion point: {} {}".format(insertion_point.parent.name(), insertion_point.position))
         self.load_layer(data, insertion_point)
