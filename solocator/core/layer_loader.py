@@ -29,7 +29,7 @@ from solocator.gui.load_layer_dialog import LoadLayerDialog
 try:
     from qgis.gui.QgsLayerTreeRegistryBridge import InsertionPoint
 except ModuleNotFoundError:
-    from .layertree import InsertionPoint, layerTreeInsertionPoint
+    from .layer_tree import InsertionPoint, layerTreeInsertionPoint
 
 
 class LayerLoader:
