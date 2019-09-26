@@ -49,6 +49,12 @@ import solocator.resources_rc  # NOQA
 
 LAYER_GROUP = 'layergroup'
 
+DATAPRODUCT_TYPE_TRANSLATION = {
+    'datasetview': 'Layer',
+    'facadelayer': 'Fassadenlayer',
+    'background': 'Hintergrundlayer'
+}
+
 
 class FeatureResult:
     def __init__(self, dataproduct_id, id_field_name, id_field_type, feature_id):
@@ -71,6 +77,15 @@ class DataProductResult:
 
     def __repr__(self):
         return 'SoLocator Data Product: {} {} ()'.format(self.type, self.dataproduct_id, self.dset_info, self.sublayers)
+
+
+class FilterResult:
+    """
+    A result holder for sub-filtering
+    """
+    def __init__(self, filter_word, search):
+        self.filter_word = filter_word
+        self.search = search
 
 
 class NoResult:
@@ -188,7 +203,7 @@ class SoLocatorFilter(QgsLocatorFilter):
             self.dbg_info(url)
             try:
                 (response, content) = nam.request(url, headers=self.HEADERS, blocking=True)
-                self.handle_response(response)
+                self.handle_response(response, search)
             except RequestsExceptionUserAbort:
                 pass
             except RequestsException as err:
@@ -208,7 +223,7 @@ class SoLocatorFilter(QgsLocatorFilter):
             self.info('{} {} {}'.format(exc_type, filename, exc_traceback.tb_lineno), Qgis.Critical)
             self.info(traceback.print_exception(exc_type, exc_obj, exc_traceback), Qgis.Critical)
 
-    def handle_response(self, response):
+    def handle_response(self, response, search_text: str):
         try:
             if response.status_code != 200:
                 if not isinstance(response.exception, RequestsExceptionUserAbort):
@@ -217,19 +232,33 @@ class SoLocatorFilter(QgsLocatorFilter):
                 return
 
             data = json.loads(response.content.decode('utf-8'))
-            # self.dbg_info(data)
+
+            # sub-filtering
+            # self.dbg_info(data['result_counts'])
+            if len(data['result_counts']) > 1:
+                for _filter in data['result_counts']:
+                    result = QgsLocatorResult()
+                    result.filter = self
+                    result.group = 'Suche einschränken'
+                    result.displayString = _filter['filterword']
+                    if _filter['count']:
+                        result.displayString += ' ({})'.format(_filter['count'])
+                    self.dbg_info(_filter)
+                    result.icon, _ = self.dataproduct2icon_description(_filter['dataproduct_id'], 'datasetview')
+                    result.userData = FilterResult(_filter['filterword'], search_text)
+                    self.resultFetched.emit(result)
 
             for res in data['results']:
-                self.dbg_info(res)
+                # self.dbg_info(res)
 
                 result = QgsLocatorResult()
                 result.filter = self
 
                 if 'feature' in res.keys():
                     f = res['feature']
-                    self.dbg_info("feature: {}".format(f))
+                    # self.dbg_info("feature: {}".format(f))
                     result.displayString = f['display']
-                    result.group = 'Features'
+                    result.group = 'Orte'
                     result.userData = FeatureResult(
                         dataproduct_id=f['dataproduct_id'],
                         id_field_name=f['id_field_name'],
@@ -241,11 +270,11 @@ class SoLocatorFilter(QgsLocatorFilter):
 
                 elif 'dataproduct' in res.keys():
                     dp = res['dataproduct']
-                    self.dbg_info("dataproduct: {}".format(dp))
+                    # self.dbg_info("dataproduct: {}".format(dp))
                     result = QgsLocatorResult()
                     result.filter = self
                     result.displayString = dp['display']
-                    result.group = 'Layers'
+                    result.group = 'Karten'
                     result.userData = DataProductResult(
                         type=dp['type'],
                         dataproduct_id=dp['dataproduct_id'],
@@ -279,12 +308,20 @@ class SoLocatorFilter(QgsLocatorFilter):
 
         if type(result.userData) == NoResult:
             pass
+        elif type(result.userData) == FilterResult:
+            self.filtered_search(result.userData)
         elif type(result.userData) == FeatureResult:
             self.fetch_feature(result.userData)
         elif type(result.userData) == DataProductResult:
             self.fetch_data_product(result.userData, ctrl_clicked)
         else:
             self.info('Incorrect result. Please contact support', Qgis.Critical)
+
+    def filtered_search(self, filter_result: FilterResult):
+        search_text = '{prefix} {filter_word}: {search}'.format(
+            prefix=self.activePrefix(), filter_word=filter_result.filter_word, search=filter_result.search
+        )
+        self.iface.locatorSearch(search_text)
 
     def highlight(self, geometry: QgsGeometry):
         self.clearPreviousResults()
@@ -452,12 +489,6 @@ class SoLocatorFilter(QgsLocatorFilter):
             self.info(msg)
 
     def dataproduct2icon_description(self, dataproduct: str, type: str) -> QIcon:
-
-        DATAPRODUCT_TYPE_TRANSLATION = {
-            'datasetview': 'Layer',
-            'facadelayer': 'Fassadenlayer',
-            'background': 'Hintergrundlayer'
-        }
 
         label = None
         icon = QIcon(":/plugins/solocator/icons/solocator.png")
