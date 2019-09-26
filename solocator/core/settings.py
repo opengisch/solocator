@@ -34,8 +34,8 @@ class Settings(SettingManager):
         SettingManager.__init__(self, pluginName)
 
         self.add_setting(Integer('results_limit', Scope.Global, 20))
-        self.add_setting(Bool('keep_scale', Scope.Global, True))
-        self.add_setting(Double('point_scale', Scope.Global, 10000))
+        self.add_setting(Bool('keep_scale', Scope.Global, False))
+        self.add_setting(Double('point_scale', Scope.Global, 1000))
 
         self.add_setting(Dictionary('dataproducts', Scope.Global,
                                     {'dataproduct': 'Karten & Geodaten',
