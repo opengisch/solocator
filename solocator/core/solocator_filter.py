@@ -2,8 +2,8 @@
 """
 /***************************************************************************
 
- QGIS Swiss Locator Plugin
- Copyright (C) 2018 Denis Rouzaud
+ QGIS Solothurn Locator Plugin
+ Copyright (C) 2019 Denis Rouzaud
 
  ***************************************************************************/
 
@@ -28,23 +28,16 @@ from PyQt5.QtGui import QColor, QIcon
 from PyQt5.QtWidgets import QWidget, QApplication
 
 from qgis.core import Qgis, QgsLocatorFilter, QgsLocatorResult, QgsCoordinateReferenceSystem, \
-    QgsCoordinateTransform, QgsProject, QgsGeometry, QgsWkbTypes, QgsPointXY, QgsLocatorContext, QgsFeedback, \
-    QgsRasterLayer
+    QgsCoordinateTransform, QgsProject, QgsGeometry, QgsWkbTypes, QgsPointXY, QgsLocatorContext, QgsFeedback
 from qgis.gui import QgsRubberBand, QgisInterface, QgsMapCanvas, QgsFilterLineEdit
 
 from solocator.core.network_access_manager import NetworkAccessManager, RequestsException, RequestsExceptionUserAbort
 from solocator.core.settings import Settings
+from solocator.core.layer_loader import LayerLoader
 from solocator.gui.config_dialog import ConfigDialog
 from solocator.solocator_plugin import DEBUG
 
 DEFAULT_CRS = 'EPSG:2056'
-
-# Compatibility for QGIS < 3.10
-# TODO: remove
-try:
-    from qgis.gui.QgsLayerTreeRegistryBridge import InsertionPoint
-except ModuleNotFoundError:
-    from .layertree import InsertionPoint, layerTreeInsertionPoint
 
 import solocator.resources_rc  # NOQA
 
@@ -423,10 +416,10 @@ class SoLocatorFilter(QgsLocatorFilter):
         url = 'https://geo-t.so.ch/api/dataproduct/v1/{dataproduct_id}'.format(dataproduct_id=product.dataproduct_id)
         self.nam_fetch_feature = NetworkAccessManager()
         self.dbg_info(url)
-        self.nam_fetch_feature.finished.connect(self.parse_data_product_response)
+        self.nam_fetch_feature.finished.connect(lambda response: self.parse_data_product_response(response, open_dialog))
         self.nam_fetch_feature.request(url, headers=self.HEADERS, blocking=False)
 
-    def parse_data_product_response(self, response):
+    def parse_data_product_response(self, response, open_dialog: bool):
         if response.status_code != 200:
             if not isinstance(response.exception, RequestsExceptionUserAbort):
                 self.info("Error in feature response with status code: {} from {}"
@@ -434,6 +427,8 @@ class SoLocatorFilter(QgsLocatorFilter):
             return
 
         data = json.loads(response.content.decode('utf-8'))
+
+        LayerLoader(data, open_dialog, self)
 
         # # debug
         # for i, v in data.items():
@@ -446,55 +441,8 @@ class SoLocatorFilter(QgsLocatorFilter):
         #     else:
         #         self.dbg_info('*** {}: {}'.format(i, v))
 
-        try:
-            insertion_point = self.iface.layerTreeInsertionPoint()
-        except AttributeError:
-            # backward compatibility for QGIS < 3.10
-            # TODO: remove
-            insertion_point = layerTreeInsertionPoint(self.iface.layerTreeView())
-        self.dbg_info("insertion point: {} {}".format(insertion_point.parent.name(), insertion_point.position))
-        self.load_layer(data, insertion_point)
-
-    def load_layer(self, data: dict, insertion_point: InsertionPoint):
-        """
-        Recursive method to load layers / groups
-        """
-        self.dbg_info("load_layer call in {} at position {}".format(insertion_point.parent.name(), insertion_point.position))
-        if type(data) is list:
-            for d in data:
-                self.load_layer(d, insertion_point)
-        else:
-            # self.dbg_info('*** load: {}'.format(data.keys()))
-            if data['type'] == LAYER_GROUP:
-                if insertion_point.position >= 0:
-                    group = insertion_point.parent.insertGroup(insertion_point.position, data['display'])
-                else:
-                    group = insertion_point.parent.addGroup(data['display'])
-
-                self.load_layer(data['sublayers'], InsertionPoint(group, -1))
-            else:
-                self.dbg_info('*** load: {}'.format(data['wms_datasource']))
-                ds = data['wms_datasource']
-                if type(ds) is list and len(ds) == 1:
-                    ds = ds[0]
-                url = "contextualWMSLegend=0&crs={crs}&dpiMode=7&featureCount=10&format=image/png&layers={layer}&styles&url={url}".format(
-                    crs=data.get('crs', DEFAULT_CRS), layer=ds['name'], url=ds['service_url']
-                )
-                layer = QgsRasterLayer(url, data['display'], 'wms')
-                QgsProject.instance().addMapLayer(layer, False)
-                self.dbg_info("inserting layer in {} at position {}".format(insertion_point.parent.name(), insertion_point.position))
-                if insertion_point.position >= 0:
-                    insertion_point.parent.insertLayer(insertion_point.position, layer)
-                else:
-                    insertion_point.parent.addLayer(layer)
-
-                if 'postgis_datasource' in data:
-                    self.dbg_info(data['postgis_datasource'])
-
     def info(self, msg="", level=Qgis.Info, emit_message: bool = False):
         self.logMessage(str(msg), level)
-        if emit_message:
-            self.message_emitted.emit(msg, level)
 
     def dbg_info(self, msg=""):
         if DEBUG:
