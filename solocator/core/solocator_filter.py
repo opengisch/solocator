@@ -342,12 +342,23 @@ class SoLocatorFilter(QgsLocatorFilter):
         if geometry_type == 'Point':
             geometry = QgsGeometry.fromPointXY(QgsPointXY(data['geometry']['coordinates'][0],
                                                           data['geometry']['coordinates'][1]))
+
         elif geometry_type == 'Polygon':
             rings = data['geometry']['coordinates']
             for r in range(0, len(rings)):
                 for p in range(0, len(rings[r])):
                     rings[r][p] = QgsPointXY(rings[r][p][0], rings[r][p][1])
             geometry = QgsGeometry.fromPolygonXY(rings)
+
+        elif geometry_type == 'MultiPolygon':
+            islands = data['geometry']['coordinates']
+            for i in range(0, len(islands)):
+                for r in range(0, len(islands[i])):
+                    for p in range(0, len(islands[i][r])):
+                        islands[i][r][p] = QgsPointXY(islands[i][r][p][0], islands[i][r][p][1])
+            geometry = QgsGeometry.fromMultiPolygonXY(islands)
+
+
         else:
             # SoLocator does not handle {geometry_type} yet. Please contact support
             self.info('SoLocator unterstützt den Geometrietyp {geometry_type} nicht.'
