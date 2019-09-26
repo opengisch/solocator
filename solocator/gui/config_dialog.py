@@ -19,10 +19,10 @@
 
 import os
 from PyQt5.QtCore import Qt, pyqtSlot
-from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QAbstractItemView, QComboBox
+from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QAbstractItemView
 from qgis.PyQt.uic import loadUiType
-from qgis.core import QgsLocatorFilter
 
+from solocator.core.data_products import DATA_PRODUCTS
 from solocator.settingmanager import SettingDialog, UpdateMode, TableWidgetStringListWidget
 from solocator.core.settings import Settings
 
@@ -42,14 +42,13 @@ class ConfigDialog(QDialog, DialogUi, SettingDialog):
         self.keep_scale.toggled.connect(self.point_scale.setDisabled)
         self.keep_scale.toggled.connect(self.scale_label.setDisabled)
 
-        dataproducts = settings.value('dataproducts')
-        self.skipped_dataproducts.setRowCount(len(dataproducts))
+        self.skipped_dataproducts.setRowCount(len(DATA_PRODUCTS))
         self.skipped_dataproducts.setColumnCount(2)
         self.skipped_dataproducts.setHorizontalHeaderLabels((self.tr('Name'), self.tr('ID')))
         self.skipped_dataproducts.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.skipped_dataproducts.setSelectionMode(QAbstractItemView.SingleSelection)
         r = 0
-        for _id, name in dataproducts.items():
+        for _id, name in DATA_PRODUCTS.items():
             item = QTableWidgetItem(name)
             item.setData(Qt.UserRole, _id)
             item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsUserCheckable)
@@ -67,7 +66,7 @@ class ConfigDialog(QDialog, DialogUi, SettingDialog):
         sd_widget.userdata = True
         sd_widget.invert = True
 
-    def select_all(self, select:bool =True):
+    def select_all(self, select: bool = True):
         for r in range(self.skipped_dataproducts.rowCount()):
             item = self.skipped_dataproducts.item(r, 0)
             item.setCheckState(Qt.Checked if select else Qt.Unchecked)

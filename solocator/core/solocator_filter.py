@@ -34,21 +34,15 @@ from qgis.gui import QgsRubberBand, QgisInterface, QgsMapCanvas, QgsFilterLineEd
 from solocator.core.network_access_manager import NetworkAccessManager, RequestsException, RequestsExceptionUserAbort
 from solocator.core.settings import Settings
 from solocator.core.layer_loader import LayerLoader
+from solocator.core.data_products import DATA_PRODUCTS, DATAPRODUCT_TYPE_TRANSLATION
 from solocator.gui.config_dialog import ConfigDialog
 from solocator.solocator_plugin import DEBUG
-
-DEFAULT_CRS = 'EPSG:2056'
 
 import solocator.resources_rc  # NOQA
 
 
+DEFAULT_CRS = 'EPSG:2056'
 LAYER_GROUP = 'layergroup'
-
-DATAPRODUCT_TYPE_TRANSLATION = {
-    'datasetview': 'Layer',
-    'facadelayer': 'Fassadenlayer',
-    'background': 'Hintergrundlayer'
-}
 
 
 class FeatureResult:
@@ -165,6 +159,11 @@ class SoLocatorFilter(QgsLocatorFilter):
         dst_crs = self.map_canvas.mapSettings().destinationCrs()
         self.transform_ch = QgsCoordinateTransform(src_crs_ch, dst_crs, QgsProject.instance())
 
+    def enabled_dataproducts(self):
+        categories = DATA_PRODUCTS.keys()
+        skipped = self.settings.value('skipped_dataproducts')
+        return ','.join(list(filter(lambda id: id not in skipped, categories)))
+
     @staticmethod
     def url_with_param(url, params) -> str:
         url = QUrl(url)
@@ -187,7 +186,7 @@ class SoLocatorFilter(QgsLocatorFilter):
             url = 'https://geo-t.so.ch/api/search/v2'
             params = {
                 'searchtext': str(search),
-                'filter': self.settings.enabled_dataproducts(),
+                'filter': self.enabled_dataproducts(),
                 'limit': str(self.settings.value('results_limit'))
 
             }

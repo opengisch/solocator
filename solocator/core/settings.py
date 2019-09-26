@@ -18,7 +18,7 @@
 """
 
 
-from solocator.settingmanager import SettingManager, Scope, Bool, Stringlist, Integer, Double, Dictionary
+from solocator.settingmanager import SettingManager, Scope, Bool, Stringlist, Integer, Double
 
 pluginName = "solocator"
 
@@ -31,23 +31,8 @@ class Settings(SettingManager):
         self.add_setting(Bool('keep_scale', Scope.Global, False))
         self.add_setting(Double('point_scale', Scope.Global, 1000))
 
-        self.add_setting(Dictionary('dataproducts', Scope.Global,
-                                    {'dataproduct': 'Karten & Geodaten',
-                                     'ch.so.agi.gemeindegrenzen': 'Gemeinden',
-                                     'ch.so.agi.av.gebaeudeadressen.gebaeudeeingaenge': 'Adressen',
-                                     'ch.so.agi.av.bodenbedeckung': 'Bodenbedeckungsnamen',
-                                     'ch.so.agi.av.grundstuecke.projektierte': 'Grundstücke projektiert',
-                                     'ch.so.agi.av.grundstuecke.rechtskraeftig': 'Grundstücke rechtskräftig',
-                                     'ch.so.agi.av.nomenklatur.flurnamen': 'Flurnamen',
-                                     'ch.so.agi.av.nomenklatur.gelaendenamen': 'Geländenamen'}))
-
         # save only skipped categories so newly added categories will be enabled by default
         self.add_setting(Stringlist('skipped_dataproducts', Scope.Global, None))
-
-    def enabled_dataproducts(self):
-        categories = self.value('dataproducts').keys()
-        skipped = self.value('skipped_dataproducts')
-        return ','.join(list(filter(lambda id: id not in skipped, categories)))
 
 
 
