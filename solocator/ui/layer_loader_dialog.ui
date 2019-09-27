@@ -36,7 +36,7 @@
    <item row="1" column="0">
     <widget class="QLabel" name="label">
      <property name="text">
-      <string>Load subset of layers:</string>
+      <string>Eine Auswahl der Layer laden:</string>
      </property>
     </widget>
    </item>
@@ -46,7 +46,7 @@
       <bool>false</bool>
      </property>
      <property name="text">
-      <string>Try to load as PostgreSQL layers if possible</string>
+      <string>Versuche Layer als PostgreSQL zu laden</string>
      </property>
     </widget>
    </item>

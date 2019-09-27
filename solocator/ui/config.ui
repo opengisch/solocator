@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>SoLocator filter configuration</string>
+   <string>SoLocator Filter Konfiguration</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="5" column="0" colspan="3">
@@ -111,14 +111,14 @@
    <item row="2" column="0" colspan="3">
     <widget class="QCheckBox" name="keep_scale">
      <property name="text">
-      <string>Keep scale of map canvas when identifying a feature</string>
+      <string>Kartenmassstab beim Lokalisieren eines Objektes beibehalten</string>
      </property>
     </widget>
    </item>
    <item row="3" column="0">
     <widget class="QLabel" name="scale_label">
      <property name="text">
-      <string>Scale when identifying points</string>
+      <string>Massstab beim Identifizieren eines Punktes (or Lokalisieren)</string>
      </property>
     </widget>
    </item>
