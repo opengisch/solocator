@@ -25,6 +25,7 @@ from qgis.PyQt.uic import loadUiType
 
 from solocator.settingmanager import SettingDialog, UpdateMode
 from solocator.core.settings import Settings
+from solocator.core.layer import SoLayer
 
 DialogUi, _ = loadUiType(os.path.join(os.path.dirname(__file__), '../ui/layer_loader_dialog.ui'))
 
@@ -45,9 +46,16 @@ class LayerLoaderDialog(QDialog, DialogUi, SettingDialog):
         self.layerTreeWidget.setCurrentItem(self.layerTreeWidget.topLevelItem(0))
 
         self.layerTreeWidget.itemSelectionChanged.connect(self.on_selection_changed)
+        self.on_selection_changed()
 
     def on_selection_changed(self):
         self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(len(self.layerTreeWidget.selectedItems()) == 1)
+
+        current_item = self.layerTreeWidget.currentItem().data(0, Qt.UserRole)
+        if type(current_item) == SoLayer:
+            self.descriptionBrowser.setText(current_item.description)
+        else:
+            self.descriptionBrowser.clear()
 
     def first_selected_item(self):
         return self.layerTreeWidget.currentItem().data(0, Qt.UserRole)
