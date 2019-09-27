@@ -18,8 +18,10 @@
 """
 
 
-from qgis.core import QgsLayerTree, QgsLayerTreeGroup, QgsLayerTreeUtils
+from qgis.core import QgsLayerTree, QgsLayerTreeGroup
 from qgis.gui import QgsLayerTreeView
+
+from solocator.core.utils import dbg_info
 
 
 class InsertionPoint:
@@ -36,19 +38,19 @@ class InsertionPoint:
         return self._position
 
 
-def layerTreeInsertionPoint(treeView: QgsLayerTreeView) -> tuple:
+def layerTreeInsertionPoint(tree_view: QgsLayerTreeView) -> tuple:
     """
     Direct copy of the code QgisApp::layerTreeInsertionPoint for QGIS < 3.10
     """
-    insert_group = treeView.layerTreeModel().rootGroup()
-    current = treeView.currentIndex()
+    insert_group = tree_view.layerTreeModel().rootGroup()
+    current = tree_view.currentIndex()
     index = 0
 
     if current.isValid():
 
         index = current.row()
 
-        current_node = treeView.currentNode()
+        current_node = tree_view.currentNode()
         if current_node:
 
             # if the insertion point is actually a group, insert new layers into the group
@@ -60,33 +62,33 @@ def layerTreeInsertionPoint(treeView: QgsLayerTreeView) -> tuple:
                 return InsertionPoint(insert_group, 0)
 
             # otherwise just set the insertion point in front of the current node
-            parentNode = current_node.parent()
-            if QgsLayerTree.isGroup(parentNode):
+            parent_node = current_node.parent()
+            if QgsLayerTree.isGroup(parent_node):
 
                 # if the group is embedded go to the first non-embedded group, at worst the top level item
-                insert_group = QgsLayerTreeUtils.firstGroupWithoutCustomProperty(parentNode, "embedded")
-                if parentNode != insert_group:
+                insert_group = firstGroupWithoutCustomProperty(parent_node, "embedded")
+                if parent_node != insert_group:
                     index = 0
 
     return InsertionPoint(insert_group, index)
 
 
-def firstGroupWithoutCustomProperty(group: QgsLayerTreeGroup, property: str) -> QgsLayerTreeGroup:
+def firstGroupWithoutCustomProperty(group: QgsLayerTreeGroup, _property: str) -> QgsLayerTreeGroup:
     """
     Taken from QgsLayerTreeUtils::firstGroupWithoutCustomProperty
     :param group:
-    :param property:
+    :param _property:
     :return:
     """
     # if the group is embedded go to the first non-embedded group, at worst the top level item
-    while group.customProperty(property):
+    while group.customProperty(_property):
         if not group.parent():
             break
-
-    if QgsLayerTree.isGroup(group.parent()):
-        group = group.parent()
-    else:
-        assert False
+        if QgsLayerTree.isGroup(group.parent()):
+            group = group.parent()
+        else:
+            dbg_info(group)
+            assert False
 
     return group
 

@@ -27,7 +27,7 @@ from qgis.gui import QgisInterface
 
 from solocator.core.data_products import LAYER_GROUP
 from solocator.core.utils import dbg_info
-from solocator.gui.load_layer_dialog import LoadLayerDialog
+from solocator.gui.layer_loader_dialog import LayerLoaderDialog
 
 DEFAULT_CRS = 'EPSG:2056'
 
@@ -91,7 +91,7 @@ class SoGroup:
 
     def load(self, insertion_point: InsertionPoint):
         """
-        Loads layer in the layer tree
+        Loads group in the layer tree
         :param insertion_point: The insertion point in the layer tree (group + position)
         """
         if insertion_point.position >= 0:
@@ -121,7 +121,14 @@ class LayerLoader:
 
         data = self.reformat_data(data)
 
-        if not open_dialog or LoadLayerDialog(data).exec_():
+        if open_dialog:
+            dlg = LayerLoaderDialog(data)
+            if dlg.exec_():
+                data = dlg.first_selected_item()
+            else:
+                data = None
+
+        if data:
             data.load(insertion_point)
 
     def reformat_data(self, data: dict):

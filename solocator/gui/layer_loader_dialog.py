@@ -19,18 +19,17 @@
 
 
 import os
-from PyQt5.QtCore import Qt, pyqtSlot
-from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QAbstractItemView, QComboBox
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtWidgets import QDialog, QAbstractItemView, QDialogButtonBox
 from qgis.PyQt.uic import loadUiType
-from qgis.core import QgsLocatorFilter
 
-from solocator.settingmanager import SettingDialog, UpdateMode, TableWidgetStringListWidget
+from solocator.settingmanager import SettingDialog, UpdateMode
 from solocator.core.settings import Settings
 
-DialogUi, _ = loadUiType(os.path.join(os.path.dirname(__file__), '../ui/load_layer.ui'))
+DialogUi, _ = loadUiType(os.path.join(os.path.dirname(__file__), '../ui/layer_loader_dialog.ui'))
 
 
-class LoadLayerDialog(QDialog, DialogUi, SettingDialog):
+class LayerLoaderDialog(QDialog, DialogUi, SettingDialog):
     def __init__(self, data, parent=None):
         settings = Settings()
         QDialog.__init__(self, parent)
@@ -40,6 +39,19 @@ class LoadLayerDialog(QDialog, DialogUi, SettingDialog):
         self.layerTreeWidget.addTopLevelItem(data.tree_widget_item())
         self.layerTreeWidget.setColumnCount(1)
         self.layerTreeWidget.setHeaderLabels(['Name'])
+        self.layerTreeWidget.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.layerTreeWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
+
+        self.layerTreeWidget.setCurrentItem(self.layerTreeWidget.topLevelItem(0))
+
+        self.layerTreeWidget.itemSelectionChanged.connect(self.on_selection_changed)
+
+    def on_selection_changed(self):
+        self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(len(self.layerTreeWidget.selectedItems()) == 1)
+
+    def first_selected_item(self):
+        return self.layerTreeWidget.currentItem().data(0, Qt.UserRole)
+
 
 
 
