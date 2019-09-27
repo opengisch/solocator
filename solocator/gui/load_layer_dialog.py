@@ -37,3 +37,11 @@ class LoadLayerDialog(QDialog, DialogUi, SettingDialog):
         SettingDialog.__init__(self, setting_manager=settings, mode=UpdateMode.DialogAccept)
         self.setupUi(self)
 
+        self.layerTreeWidget.addTopLevelItem(data.tree_widget_item())
+        self.layerTreeWidget.setColumnCount(1)
+        self.layerTreeWidget.setHeaderLabels(['Name'])
+
+
+
+
+

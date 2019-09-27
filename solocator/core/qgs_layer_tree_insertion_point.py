@@ -23,13 +23,13 @@ from qgis.gui import QgsLayerTreeView
 
 
 class InsertionPoint:
-    def __init__(self, parent: QgsLayerTreeGroup, position: int):
-        self._parent = parent
+    def __init__(self, group: QgsLayerTreeGroup, position: int):
+        self._group = group
         self._position = position
 
     @property
-    def parent(self):
-        return self._parent
+    def group(self):
+        return self._group
 
     @property
     def position(self):
@@ -55,7 +55,7 @@ def layerTreeInsertionPoint(treeView: QgsLayerTreeView) -> tuple:
             if QgsLayerTree.isGroup(current_node):
 
                 # if the group is embedded go to the first non-embedded group, at worst the top level item
-                insert_group = QgsLayerTreeUtils.firstGroupWithoutCustomProperty(current_node, "embedded")
+                insert_group = firstGroupWithoutCustomProperty(current_node, "embedded")
 
                 return InsertionPoint(insert_group, 0)
 
@@ -69,3 +69,24 @@ def layerTreeInsertionPoint(treeView: QgsLayerTreeView) -> tuple:
                     index = 0
 
     return InsertionPoint(insert_group, index)
+
+
+def firstGroupWithoutCustomProperty(group: QgsLayerTreeGroup, property: str) -> QgsLayerTreeGroup:
+    """
+    Taken from QgsLayerTreeUtils::firstGroupWithoutCustomProperty
+    :param group:
+    :param property:
+    :return:
+    """
+    # if the group is embedded go to the first non-embedded group, at worst the top level item
+    while group.customProperty(property):
+        if not group.parent():
+            break
+
+    if QgsLayerTree.isGroup(group.parent()):
+        group = group.parent()
+    else:
+        assert False
+
+    return group
+

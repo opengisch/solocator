@@ -426,19 +426,7 @@ class SoLocatorFilter(QgsLocatorFilter):
             return
 
         data = json.loads(response.content.decode('utf-8'))
-
         LayerLoader(data, open_dialog, self)
-
-        # # debug
-        # for i, v in data.items():
-        #     if i in ('qml', 'contacts'): continue
-        #     if i == 'sublayers':
-        #         for sublayer in data['sublayers']:
-        #             for j, u in sublayer.items():
-        #                 if j in ('qml', 'contacts'): continue
-        #                 self.dbg_info('*** sublayer {}: {}'.format(j, u))
-        #     else:
-        #         self.dbg_info('*** {}: {}'.format(i, v))
 
     def info(self, msg="", level=Qgis.Info, emit_message: bool = False):
         self.logMessage(str(msg), level)

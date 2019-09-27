@@ -17,6 +17,11 @@
  ***************************************************************************/
 """
 
+from copy import deepcopy
+
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtWidgets import QTreeWidgetItem
+
 from qgis.core import QgsRasterLayer, QgsProject
 from qgis.gui import QgisInterface
 
@@ -29,7 +34,67 @@ from solocator.gui.load_layer_dialog import LoadLayerDialog
 try:
     from qgis.gui.QgsLayerTreeRegistryBridge import InsertionPoint
 except ModuleNotFoundError:
-    from .layer_tree import InsertionPoint, layerTreeInsertionPoint
+    from .qgs_layer_tree_insertion_point import InsertionPoint, layerTreeInsertionPoint
+
+
+class SoLayer:
+    def __init__(self, name: str, crs: str, wms_datasource: dict, postgis_datasource: dict):
+        self.name = name
+        self.crs = crs
+        self.wms_datasource = wms_datasource
+        self.postgis_datasource = postgis_datasource
+
+    def __repr__(self):
+        return 'SoLayer: {}'.format(self.name)
+
+    def load(self, insertion_point: InsertionPoint):
+        """
+        Loads layer in the layer tree
+        :param insertion_point: The insertion point in the layer tree (group + position)
+        """
+        # if type(ds) is list and len(ds) == 1:
+        #     ds = ds[0]
+        url = "contextualWMSLegend=0&crs={crs}&dpiMode=7&featureCount=10&format=image/png&layers={layer}&styles&url={url}".format(
+            crs=self.crs, layer=self.wms_datasource['name'], url=self.wms_datasource['service_url']
+        )
+        layer = QgsRasterLayer(url, self.name, 'wms')
+        QgsProject.instance().addMapLayer(layer, False)
+        if insertion_point.position >= 0:
+            insertion_point.group.insertLayer(insertion_point.position, layer)
+        else:
+            insertion_point.group.addLayer(layer)
+
+    def tree_widget_item(self):
+        item = QTreeWidgetItem([self.name])
+        item.setData(0, Qt.UserRole, deepcopy(self))
+        return item
+
+
+class SoGroup:
+    def __init__(self, name, children):
+        self.name = name
+        self.children = children
+
+    def __repr__(self):
+        return 'SoGroup: {} ( {} )'.format(self.name, ','.join([child.__repr__() for child in self.children]))
+
+    def load(self, insertion_point: InsertionPoint):
+        """
+        Loads layer in the layer tree
+        :param insertion_point: The insertion point in the layer tree (group + position)
+        """
+        if insertion_point.position >= 0:
+            group = insertion_point.group.insertGroup(insertion_point.position, self.name)
+        else:
+            group = insertion_point.group.addGroup(self.name)
+        for i, child in enumerate(self.children):
+            child.load(InsertionPoint(group, i))
+
+    def tree_widget_item(self):
+        item = QTreeWidgetItem([self.name])
+        item.addChildren([child.tree_widget_item() for child in self.children])
+        item.setData(0, Qt.UserRole, deepcopy(self))
+        return item
 
 
 class LayerLoader:
@@ -37,52 +102,35 @@ class LayerLoader:
         self.solocator = solocator
 
         try:
-            insertion_point = self.iface.layerTreeInsertionPoint()
+            insertion_point = solocator.iface.layerTreeInsertionPoint()
         except AttributeError:
             # backward compatibility for QGIS < 3.10
             # TODO: remove
             insertion_point = layerTreeInsertionPoint(solocator.iface.layerTreeView())
+        solocator.dbg_info("insertion point: {} {}".format(insertion_point.group.name(), insertion_point.position))
 
-        solocator.dbg_info("insertion point: {} {}".format(insertion_point.parent.name(), insertion_point.position))
-        if open_dialog:
-            LoadLayerDialog(data, insertion_point).exec_()
-        else:
-            self.load_layer(data, insertion_point)
-
-    def load_layer(self, data: dict, insertion_point: InsertionPoint):
-        """
-        Recursive method to load layers / groups
-        """
-        self.solocator.dbg_info("load_layer call in {}"
-                      " at position {}".format(insertion_point.parent.name(), insertion_point.position))
-        if type(data) is list:
-            for d in data:
-                self.load_layer(d, insertion_point)
-        else:
-            # self.solocator.dbg_info('*** load: {}'.format(data.keys()))
-            if data['type'] == solocator_filter.LAYER_GROUP:
-                if insertion_point.position >= 0:
-                    group = insertion_point.parent.insertGroup(insertion_point.position, data['display'])
-                else:
-                    group = insertion_point.parent.addGroup(data['display'])
-
-                self.load_layer(data['sublayers'], InsertionPoint(group, -1))
+        # debug
+        for i, v in data.items():
+            if i in ('qml', 'contacts'): continue
+            if i == 'sublayers':
+                for sublayer in data['sublayers']:
+                    for j, u in sublayer.items():
+                        if j in ('qml', 'contacts'): continue
+                        solocator.dbg_info('*** sublayer {}: {}'.format(j, u))
             else:
-                self.solocator.dbg_info('*** load: {}'.format(data['wms_datasource']))
-                ds = data['wms_datasource']
-                if type(ds) is list and len(ds) == 1:
-                    ds = ds[0]
-                url = "contextualWMSLegend=0&crs={crs}&dpiMode=7&featureCount=10&format=image/png&layers={layer}&styles&url={url}".format(
-                    crs=data.get('crs', solocator_filter.DEFAULT_CRS), layer=ds['name'], url=ds['service_url']
-                )
-                layer = QgsRasterLayer(url, data['display'], 'wms')
-                QgsProject.instance().addMapLayer(layer, False)
-                self.solocator.dbg_info("inserting layer in {}"
-                              " at position {}".format(insertion_point.parent.name(), insertion_point.position))
-                if insertion_point.position >= 0:
-                    insertion_point.parent.insertLayer(insertion_point.position, layer)
-                else:
-                    insertion_point.parent.addLayer(layer)
+                solocator.dbg_info('*** {}: {}'.format(i, v))
 
-                if 'postgis_datasource' in data:
-                    self.solocator.dbg_info(data['postgis_datasource'])
+        data = self.reformat_data(data)
+
+        solocator.dbg_info(data)
+
+        if not open_dialog or LoadLayerDialog(data).exec_():
+            data.load(insertion_point)
+
+    def reformat_data(self, data: dict):
+        if data['type'] == solocator_filter.LAYER_GROUP:
+            children = [self.reformat_data(child_data) for child_data in data['sublayers']]
+            return SoGroup(data['display'], children)
+        else:
+            crs = data.get('crs', solocator_filter.DEFAULT_CRS)
+            return SoLayer(data['display'], crs, data['wms_datasource'], data.get('postgis_datasource'))
