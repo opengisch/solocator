@@ -2,13 +2,9 @@
 """
 /***************************************************************************
 
-                                 QgisLocator
+ QGIS Solothurn Locator Plugin
+ Copyright (C) 2019 Denis Rouzaud
 
-                             -------------------
-        begin                : 2018-05-03
-        copyright            : (C) 2018 by Denis Rouzaud
-        email                : denis@opengis.ch
-        git sha              : $Format:%H$
  ***************************************************************************/
 
 /***************************************************************************
@@ -21,11 +17,15 @@
  ***************************************************************************/
 """
 
+from qgis.core import Qgis, QgsMessageLog
 
-def classFactory(iface):
-    """Load plugin.
-    :param iface: A QGIS interface instance.
-    """
+DEBUG = True
 
-    from .solocator_plugin import SoLocatorPlugin
-    return SoLocatorPlugin(iface)
+
+def info(message: str, level: Qgis.MessageLevel = Qgis.Info):
+    QgsMessageLog.logMessage("{}: {}".format('SoLocator', message), "Locator bar", level)
+
+
+def dbg_info(message: str):
+    if DEBUG:
+        info(message)

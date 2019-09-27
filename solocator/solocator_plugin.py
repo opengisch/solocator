@@ -17,8 +17,6 @@
  ***************************************************************************/
 """
 
-DEBUG = True
-
 from PyQt5.QtWidgets import QWidget
 from qgis.core import Qgis
 from qgis.gui import QgisInterface, QgsMessageBarItem
@@ -44,3 +42,4 @@ class SoLocatorPlugin:
             self.iface.messageBar().pushItem(self.item)
         else:
             self.iface.messageBar().pushMessage(title, msg, level)
+

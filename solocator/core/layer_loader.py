@@ -25,8 +25,11 @@ from qgis.PyQt.QtWidgets import QTreeWidgetItem
 from qgis.core import QgsRasterLayer, QgsProject
 from qgis.gui import QgisInterface
 
-from solocator.core import solocator_filter
+from solocator.core.data_products import LAYER_GROUP
+from solocator.core.utils import dbg_info
 from solocator.gui.load_layer_dialog import LoadLayerDialog
+
+DEFAULT_CRS = 'EPSG:2056'
 
 
 # Compatibility for QGIS < 3.10
@@ -41,6 +44,9 @@ class SoLayer:
     def __init__(self, name: str, crs: str, wms_datasource: dict, postgis_datasource: dict):
         self.name = name
         self.crs = crs
+        # fix for wms_datasource
+        if type(wms_datasource) is list and len(wms_datasource) == 1:
+            wms_datasource = wms_datasource[0]
         self.wms_datasource = wms_datasource
         self.postgis_datasource = postgis_datasource
 
@@ -52,9 +58,14 @@ class SoLayer:
         Loads layer in the layer tree
         :param insertion_point: The insertion point in the layer tree (group + position)
         """
-        # if type(ds) is list and len(ds) == 1:
-        #     ds = ds[0]
-        url = "contextualWMSLegend=0&crs={crs}&dpiMode=7&featureCount=10&format=image/png&layers={layer}&styles&url={url}".format(
+        url = "contextualWMSLegend=0&" \
+              "crs={crs}&" \
+              "dpiMode=7&" \
+              "featureCount=10&" \
+              "format=image/png&" \
+              "layers={layer}&" \
+              "styles&" \
+              "url={url}".format(
             crs=self.crs, layer=self.wms_datasource['name'], url=self.wms_datasource['service_url']
         )
         layer = QgsRasterLayer(url, self.name, 'wms')
@@ -98,39 +109,29 @@ class SoGroup:
 
 
 class LayerLoader:
-    def __init__(self, data: dict, open_dialog: bool, solocator):
-        self.solocator = solocator
+    def __init__(self, data: dict, open_dialog: bool, iface: QgisInterface):
 
         try:
-            insertion_point = solocator.iface.layerTreeInsertionPoint()
+            insertion_point = iface.layerTreeInsertionPoint()
         except AttributeError:
             # backward compatibility for QGIS < 3.10
             # TODO: remove
-            insertion_point = layerTreeInsertionPoint(solocator.iface.layerTreeView())
-        solocator.dbg_info("insertion point: {} {}".format(insertion_point.group.name(), insertion_point.position))
-
-        # debug
-        for i, v in data.items():
-            if i in ('qml', 'contacts'): continue
-            if i == 'sublayers':
-                for sublayer in data['sublayers']:
-                    for j, u in sublayer.items():
-                        if j in ('qml', 'contacts'): continue
-                        solocator.dbg_info('*** sublayer {}: {}'.format(j, u))
-            else:
-                solocator.dbg_info('*** {}: {}'.format(i, v))
+            insertion_point = layerTreeInsertionPoint(iface.layerTreeView())
+        dbg_info("insertion point: {} {}".format(insertion_point.group.name(), insertion_point.position))
 
         data = self.reformat_data(data)
-
-        solocator.dbg_info(data)
 
         if not open_dialog or LoadLayerDialog(data).exec_():
             data.load(insertion_point)
 
     def reformat_data(self, data: dict):
-        if data['type'] == solocator_filter.LAYER_GROUP:
+        """
+        Recursive construction of the tree
+        :param data:
+        """
+        if data['type'] == LAYER_GROUP:
             children = [self.reformat_data(child_data) for child_data in data['sublayers']]
             return SoGroup(data['display'], children)
         else:
-            crs = data.get('crs', solocator_filter.DEFAULT_CRS)
+            crs = data.get('crs', DEFAULT_CRS)
             return SoLayer(data['display'], crs, data['wms_datasource'], data.get('postgis_datasource'))
