@@ -24,10 +24,7 @@
     </widget>
    </item>
    <item row="0" column="0">
-    <widget class="QCheckBox" name="checkBox">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
+    <widget class="QCheckBox" name="load_as_postgres">
      <property name="text">
       <string>Versuche Layer als PostgreSQL zu laden</string>
      </property>

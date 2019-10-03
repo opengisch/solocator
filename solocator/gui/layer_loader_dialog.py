@@ -17,7 +17,6 @@
  ***************************************************************************/
 """
 
-
 import os
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QDialog, QAbstractItemView, QDialogButtonBox
@@ -60,8 +59,6 @@ class LayerLoaderDialog(QDialog, DialogUi, SettingDialog):
     def first_selected_item(self):
         return self.layerTreeWidget.currentItem().data(0, Qt.UserRole)
 
-
-
-
-
+    def try_to_load_as_postgresql(self) -> bool:
+        return self.load_as_postgres.isChecked()
 

@@ -59,16 +59,18 @@ class LayerLoader:
                 dbg_info('*** {}: {}'.format(i, v))
 
         data = self.reformat_data(data)
+        load_as_pg = False
 
         if open_dialog:
             dlg = LayerLoaderDialog(data)
             if dlg.exec_():
                 data = dlg.first_selected_item()
+                load_as_pg = dlg.try_to_load_as_postgresql()
             else:
                 data = None
 
         if data:
-            data.load(insertion_point)
+            data.load(insertion_point, load_as_pg)
 
     def reformat_data(self, data: dict):
         """

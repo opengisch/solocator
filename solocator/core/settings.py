@@ -30,6 +30,7 @@ class Settings(SettingManager):
         self.add_setting(Integer('results_limit', Scope.Global, 20))
         self.add_setting(Bool('keep_scale', Scope.Global, False))
         self.add_setting(Double('point_scale', Scope.Global, 1000))
+        self.add_setting(Bool('load_as_postgres', Scope.Global, False))
 
         # save only skipped categories so newly added categories will be enabled by default
         self.add_setting(Stringlist('skipped_dataproducts', Scope.Global, None))
