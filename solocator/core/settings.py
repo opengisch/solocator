@@ -18,7 +18,7 @@
 """
 
 
-from solocator.settingmanager import SettingManager, Scope, Bool, Stringlist, Integer, Double
+from solocator.settingmanager import SettingManager, Scope, Bool, Stringlist, Integer, Double, String
 
 pluginName = "solocator"
 
@@ -31,6 +31,7 @@ class Settings(SettingManager):
         self.add_setting(Bool('keep_scale', Scope.Global, False))
         self.add_setting(Double('point_scale', Scope.Global, 1000))
         self.add_setting(Bool('load_as_postgres', Scope.Global, False))
+        self.add_setting(String('pg_auth_id', Scope.Global, None))
 
         # save only skipped categories so newly added categories will be enabled by default
         self.add_setting(Stringlist('skipped_dataproducts', Scope.Global, None))

@@ -19,7 +19,7 @@
 
 import os
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtWidgets import QDialog, QAbstractItemView, QDialogButtonBox
+from qgis.PyQt.QtWidgets import QDialog, QAbstractItemView, QDialogButtonBox, QMessageBox
 from qgis.PyQt.uic import loadUiType
 
 from solocator.settingmanager import SettingDialog, UpdateMode
@@ -62,6 +62,14 @@ class LayerLoaderDialog(QDialog, DialogUi, SettingDialog):
     def first_selected_item(self):
         return self.layerTreeWidget.currentItem().data(0, Qt.UserRole)
 
-    def try_to_load_as_postgresql(self) -> bool:
-        return self.load_as_postgres.isChecked()
+    def try_to_load_as_postgresql(self) -> tuple:
+        return self.load_as_postgres.isChecked(), self.pg_auth_id.configId()
+
+    def accept(self) -> None:
+        if self.load_as_postgres.isChecked() and self.pg_auth_id.configId() == '':
+            button = QMessageBox.question(self, 'Posgres authentification',
+                                          'No authentification method has been defined. Are you sure to continue?')
+            if button == QMessageBox.Yes:
+                QDialog.accept(self)
+
 

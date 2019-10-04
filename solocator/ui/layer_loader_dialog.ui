@@ -23,13 +23,6 @@
      </column>
     </widget>
    </item>
-   <item row="0" column="0">
-    <widget class="QCheckBox" name="load_as_postgres">
-     <property name="text">
-      <string>Versuche Layer als PostgreSQL zu laden</string>
-     </property>
-    </widget>
-   </item>
    <item row="5" column="0">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
@@ -45,6 +38,21 @@
      <property name="text">
       <string>Eine Auswahl der Layer laden:</string>
      </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QgsCollapsibleGroupBox" name="load_as_postgres">
+     <property name="title">
+      <string>Versuche Layer als PostgreSQL zu laden</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="0">
+       <widget class="QgsAuthConfigSelect" name="pg_auth_id" native="true"/>
+      </item>
+     </layout>
     </widget>
    </item>
    <item row="3" column="0">
@@ -63,6 +71,20 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QgsCollapsibleGroupBox</class>
+   <extends>QGroupBox</extends>
+   <header>qgis.gui</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QgsAuthConfigSelect</class>
+   <extends>QWidget</extends>
+   <header>qgis.gui</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>

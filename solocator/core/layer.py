@@ -22,7 +22,7 @@ from copy import deepcopy
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QTreeWidgetItem
 
-from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsProject, QgsDataSourceUri, QgsWkbTypes
+from qgis.core import Qgis, QgsVectorLayer, QgsRasterLayer, QgsProject, QgsDataSourceUri, QgsWkbTypes
 
 from solocator.core.utils import info
 
@@ -36,12 +36,11 @@ except ModuleNotFoundError:
 HOST = 'geodb-i.rootso.org'
 DB = 'pub'
 PORT = '5432'
-AUTHCFG = '7vcjx1a'
 
 
-def postgis_datasource_to_uri(postgis_datasource: dict) -> QgsDataSourceUri:
+def postgis_datasource_to_uri(postgis_datasource: dict, pg_auth_id: str) -> QgsDataSourceUri:
     uri = QgsDataSourceUri()
-    uri.setConnection(HOST, PORT, DB, None, None, QgsDataSourceUri.SslPrefer, AUTHCFG)
+    uri.setConnection(HOST, PORT, DB, None, None, QgsDataSourceUri.SslPrefer, pg_auth_id)
     [schema, table_name] = postgis_datasource['data_set_name'].split('.')
     uri.setDataSource(schema, table_name, postgis_datasource['geometry_field'])
     uri.setKeyColumn(postgis_datasource['primary_key'])
@@ -54,8 +53,9 @@ def postgis_datasource_to_uri(postgis_datasource: dict) -> QgsDataSourceUri:
     elif postgis_datasource['geometry_type'] == 'MULTIPOLYGON':
         wkb_type = QgsWkbTypes.MultiPolygon
     else:
-        info('SoLocator unterstützt den Geometrietyp {geometry_type} nicht.'
-             ' Bitte kontaktieren Sie den Support.'.format(geometry_type=geometry_type), Qgis.Warning)
+        info('SoLocator unterstützt den Geometrietyp {geometry_type} nicht. Bitte kontaktieren Sie den Support.'.format(
+            geometry_type=postgis_datasource['geometry_type']), Qgis.Warning
+        )
     uri.setWkbType(wkb_type)
     uri.setSrid(postgis_datasource.get('srid', 2056))
     return uri
@@ -91,15 +91,16 @@ class SoLayer:
     def __repr__(self):
         return 'SoLayer: {}'.format(self.name)
 
-    def load(self, insertion_point: InsertionPoint, load_as_postgres: bool):
+    def load(self, insertion_point: InsertionPoint, load_as_postgres: bool, pg_auth_id: str):
         """
         Loads layer in the layer tree
         :param insertion_point: The insertion point in the layer tree (group + position)
         :param load_as_postgres: If True, tries to load layers as postgres if possible
+        :param pg_auth_id: the configuration ID for the authentification
         """
         layer = None
         if self.postgis_datasource is not None and load_as_postgres:
-            uri = postgis_datasource_to_uri(self.postgis_datasource)
+            uri = postgis_datasource_to_uri(self.postgis_datasource, pg_auth_id)
             if uri:
                 layer = QgsVectorLayer(uri.uri(), self.name, "postgres")
         if layer is None:
@@ -125,18 +126,19 @@ class SoGroup:
     def __repr__(self):
         return 'SoGroup: {} ( {} )'.format(self.name, ','.join([child.__repr__() for child in self.children]))
 
-    def load(self, insertion_point: InsertionPoint, load_as_postgres: bool):
+    def load(self, insertion_point: InsertionPoint, load_as_postgres: bool, pg_auth_id: str):
         """
         Loads group in the layer tree
         :param insertion_point: The insertion point in the layer tree (group + position)
         :param load_as_postgres: If True, tries to load layers as postgres if possible
+        :param pg_auth_id: the configuration ID for the authentification
         """
         if insertion_point.position >= 0:
             group = insertion_point.group.insertGroup(insertion_point.position, self.name)
         else:
             group = insertion_point.group.addGroup(self.name)
         for i, child in enumerate(self.children):
-            child.load(InsertionPoint(group, i), load_as_postgres)
+            child.load(InsertionPoint(group, i), load_as_postgres, pg_auth_id)
 
     def tree_widget_item(self):
         item = QTreeWidgetItem([self.name])
