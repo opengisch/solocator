@@ -71,5 +71,7 @@ class LayerLoaderDialog(QDialog, DialogUi, SettingDialog):
                                           'No authentification method has been defined. Are you sure to continue?')
             if button == QMessageBox.Yes:
                 QDialog.accept(self)
-
-
+            else:
+                return
+        else:
+            QDialog.accept(self)
