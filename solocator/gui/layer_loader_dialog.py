@@ -47,6 +47,9 @@ class LayerLoaderDialog(QDialog, DialogUi, SettingDialog):
         self.layerTreeWidget.itemSelectionChanged.connect(self.on_selection_changed)
         self.on_selection_changed()
 
+        self.settings = settings
+        self.init_widgets()
+
     def on_selection_changed(self):
         self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(len(self.layerTreeWidget.selectedItems()) == 1)
 

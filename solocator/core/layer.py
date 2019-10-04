@@ -44,6 +44,7 @@ def postgis_datasource_to_uri(postgis_datasource: dict) -> QgsDataSourceUri:
     uri.setConnection(HOST, PORT, DB, None, None, QgsDataSourceUri.SslPrefer, AUTHCFG)
     [schema, table_name] = postgis_datasource['data_set_name'].split('.')
     uri.setDataSource(schema, table_name, postgis_datasource['geometry_field'])
+    uri.setKeyColumn(postgis_datasource['primary_key'])
     if postgis_datasource['geometry_type'] == 'POINT':
         wkb_type = QgsWkbTypes.Point
     elif postgis_datasource['geometry_type'] == 'MULITPOINT':
@@ -56,11 +57,11 @@ def postgis_datasource_to_uri(postgis_datasource: dict) -> QgsDataSourceUri:
         info('SoLocator unterstützt den Geometrietyp {geometry_type} nicht.'
              ' Bitte kontaktieren Sie den Support.'.format(geometry_type=geometry_type), Qgis.Warning)
     uri.setWkbType(wkb_type)
-    uri.setSrid('EPSG:{}'.format(postgis_datasource.get('srid', 2056)))
+    uri.setSrid(postgis_datasource.get('srid', 2056))
     return uri
 
 
-def wms_datasource_to_url(wms_datasource: dict) -> str:
+def wms_datasource_to_url(wms_datasource: dict, crs: str) -> str:
     url = "contextualWMSLegend=0&" \
           "crs={crs}&" \
           "dpiMode=7&" \
@@ -69,7 +70,7 @@ def wms_datasource_to_url(wms_datasource: dict) -> str:
           "layers={layer}&" \
           "styles&" \
           "url={url}".format(
-        crs=self.crs, layer=self.wms_datasource['name'], url=self.wms_datasource['service_url']
+        crs=crs, layer=wms_datasource['name'], url=wms_datasource['service_url']
     )
     return url
 
@@ -102,7 +103,7 @@ class SoLayer:
             if uri:
                 layer = QgsVectorLayer(uri.uri(), self.name, "postgres")
         if layer is None:
-            url = wms_datasource_to_url(self.wms_datasource)
+            url = wms_datasource_to_url(self.wms_datasource, self.crs)
             layer = QgsRasterLayer(url, self.name, 'wms')
         QgsProject.instance().addMapLayer(layer, False)
         if insertion_point.position >= 0:
