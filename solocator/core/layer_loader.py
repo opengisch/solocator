@@ -60,6 +60,7 @@ class LayerLoader:
 
         data = self.reformat_data(data)
         load_as_pg = False
+        pg_auth_id = None
 
         if open_dialog:
             dlg = LayerLoaderDialog(data)
