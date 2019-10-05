@@ -22,7 +22,7 @@ from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QDialog, QAbstractItemView, QDialogButtonBox, QMessageBox
 from qgis.PyQt.uic import loadUiType
 
-from solocator.settingmanager import SettingDialog, UpdateMode
+from solocator.qgis_setting_manager import SettingDialog, UpdateMode
 from solocator.core.settings import Settings
 from solocator.core.layer import SoLayer
 

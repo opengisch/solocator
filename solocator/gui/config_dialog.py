@@ -18,13 +18,13 @@
 """
 
 import os
-from PyQt5.QtCore import Qt, pyqtSlot
-from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QAbstractItemView
+from qgis.PyQt.QtCore import Qt, pyqtSlot
+from qgis.PyQt.QtWidgets import QDialog, QTableWidgetItem, QAbstractItemView
 from qgis.PyQt.uic import loadUiType
 
 from solocator.core.data_products import DATA_PRODUCTS
-from solocator.settingmanager import SettingDialog, UpdateMode
-from solocator.settingmanager.widgets import TableWidgetStringListWidget
+from solocator.qgis_setting_manager import SettingDialog, UpdateMode
+from solocator.qgis_setting_manager.widgets import TableWidgetStringListWidget
 from solocator.core.settings import Settings
 
 DialogUi, _ = loadUiType(os.path.join(os.path.dirname(__file__), '../ui/config.ui'))

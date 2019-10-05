@@ -18,7 +18,7 @@
 """
 
 
-from solocator.settingmanager import SettingManager, Scope, Bool, Stringlist, Integer, Double, String
+from solocator.qgis_setting_manager import SettingManager, Scope, Bool, Stringlist, Integer, Double, String
 
 pluginName = "solocator"
 
