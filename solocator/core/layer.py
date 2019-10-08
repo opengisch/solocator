@@ -91,7 +91,7 @@ class SoLayer:
     def __repr__(self):
         return 'SoLayer: {}'.format(self.name)
 
-    def load(self, insertion_point: InsertionPoint, load_as_postgres: bool, pg_auth_id: str):
+    def load(self, insertion_point: InsertionPoint, load_as_postgres: bool = False, pg_auth_id: str = None):
         """
         Loads layer in the layer tree
         :param insertion_point: The insertion point in the layer tree (group + position)
@@ -119,9 +119,10 @@ class SoLayer:
 
 
 class SoGroup:
-    def __init__(self, name, children):
+    def __init__(self, name, children, layer: SoLayer):
         self.name = name
         self.children = children
+        self.layer = layer
 
     def __repr__(self):
         return 'SoGroup: {} ( {} )'.format(self.name, ','.join([child.__repr__() for child in self.children]))
@@ -133,12 +134,16 @@ class SoGroup:
         :param load_as_postgres: If True, tries to load layers as postgres if possible
         :param pg_auth_id: the configuration ID for the authentification
         """
-        if insertion_point.position >= 0:
-            group = insertion_point.group.insertGroup(insertion_point.position, self.name)
+        if not load_as_postgres and self.layer.wms_datasource is not None:
+            self.layer.load(insertion_point)
         else:
-            group = insertion_point.group.addGroup(self.name)
-        for i, child in enumerate(self.children):
-            child.load(InsertionPoint(group, i), load_as_postgres, pg_auth_id)
+            if insertion_point.position >= 0:
+                group = insertion_point.group.insertGroup(insertion_point.position, self.name)
+            else:
+                group = insertion_point.group.addGroup(self.name)
+
+            for i, child in enumerate(self.children):
+                child.load(InsertionPoint(group, i), load_as_postgres, pg_auth_id)
 
     def tree_widget_item(self):
         item = QTreeWidgetItem([self.name])

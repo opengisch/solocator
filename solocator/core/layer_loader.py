@@ -78,11 +78,12 @@ class LayerLoader:
         Recursive construction of the tree
         :param data:
         """
+        crs = data.get('crs', DEFAULT_CRS)
         if data['type'] == LAYER_GROUP:
             children = [self.reformat_data(child_data) for child_data in data['sublayers']]
-            return SoGroup(data['display'], children)
+            group_layer = SoLayer(data['display'], crs, data['wms_datasource'], data.get('postgis_datasource'), data.get('description'))
+            return SoGroup(data['display'], children, group_layer)
         else:
-            crs = data.get('crs', DEFAULT_CRS)
             return SoLayer(data['display'], crs,
                            data['wms_datasource'], data.get('postgis_datasource'),
                            data.get('description'))
