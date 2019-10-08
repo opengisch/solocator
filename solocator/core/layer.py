@@ -57,7 +57,7 @@ def postgis_datasource_to_uri(postgis_datasource: dict, pg_auth_id: str) -> QgsD
             geometry_type=postgis_datasource['geometry_type']), Qgis.Warning
         )
     uri.setWkbType(wkb_type)
-    uri.setSrid(postgis_datasource.get('srid', 2056))
+    uri.setSrid(str(postgis_datasource.get('srid', 2056)))
     return uri
 
 
