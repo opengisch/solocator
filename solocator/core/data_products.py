@@ -36,6 +36,7 @@ DATAPRODUCT_TYPE_TRANSLATION = {
 }
 
 LAYER_GROUP = 'layergroup'
+FACADE_LAYER = 'facadelayer'
 
 
 def dataproduct2icon_description(data_product: str, layer_type: str) -> QIcon:

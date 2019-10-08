@@ -21,7 +21,7 @@
 from qgis.gui import QgisInterface
 
 from solocator.core.layer import SoLayer, SoGroup
-from solocator.core.data_products import LAYER_GROUP
+from solocator.core.data_products import LAYER_GROUP, FACADE_LAYER
 from solocator.core.utils import dbg_info
 from solocator.gui.layer_loader_dialog import LayerLoaderDialog
 
@@ -79,7 +79,7 @@ class LayerLoader:
         :param data:
         """
         crs = data.get('crs', DEFAULT_CRS)
-        if data['type'] == LAYER_GROUP:
+        if data['type'] in (LAYER_GROUP, FACADE_LAYER):
             children = [self.reformat_data(child_data) for child_data in data['sublayers']]
             group_layer = SoLayer(data['display'], crs, data['wms_datasource'], data.get('postgis_datasource'), data.get('description'))
             return SoGroup(data['display'], children, group_layer)

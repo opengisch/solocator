@@ -52,6 +52,10 @@ def postgis_datasource_to_uri(postgis_datasource: dict, pg_auth_id: str) -> QgsD
         wkb_type = QgsWkbTypes.Polygon
     elif postgis_datasource['geometry_type'] == 'MULTIPOLYGON':
         wkb_type = QgsWkbTypes.MultiPolygon
+    elif postgis_datasource['geometry_type'] == 'LINESTRING':
+        wkb_type = QgsWkbTypes.LineString
+    elif postgis_datasource['geometry_type'] == 'MULTILINESTRING':
+        wkb_type = QgsWkbTypes.MultiLineString
     else:
         info('SoLocator unterstützt den Geometrietyp {geometry_type} nicht. Bitte kontaktieren Sie den Support.'.format(
             geometry_type=postgis_datasource['geometry_type']), Qgis.Warning
