@@ -32,6 +32,8 @@ class Settings(SettingManager):
         self.add_setting(Double('point_scale', Scope.Global, 1000))
         self.add_setting(Bool('load_as_postgres', Scope.Global, False))
         self.add_setting(String('pg_auth_id', Scope.Global, None))
+        self.add_setting(Bool('wms_load_separate', Scope.Global, True))
+        self.add_setting(String('wms_image_format', Scope.Global, 'png', allowed_values=('png', 'jpeg')))
 
         # save only skipped categories so newly added categories will be enabled by default
         self.add_setting(Stringlist('skipped_dataproducts', Scope.Global, None))

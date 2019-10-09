@@ -24,7 +24,7 @@ from qgis.PyQt.uic import loadUiType
 
 from solocator.core.data_products import DATA_PRODUCTS
 from solocator.qgis_setting_manager import SettingDialog, UpdateMode
-from solocator.qgis_setting_manager.widgets import TableWidgetStringListWidget
+from solocator.qgis_setting_manager.widgets import TableWidgetStringListWidget, ComboStringWidget
 from solocator.core.settings import Settings
 
 DialogUi, _ = loadUiType(os.path.join(os.path.dirname(__file__), '../ui/config.ui'))
@@ -66,6 +66,9 @@ class ConfigDialog(QDialog, DialogUi, SettingDialog):
         sd_widget.column = 0
         sd_widget.userdata = True
         sd_widget.invert = True
+
+        img_widget: ComboStringWidget = self.setting_widget('wms_image_format')
+        img_widget.auto_populate()
 
     def select_all(self, select: bool = True):
         for r in range(self.skipped_dataproducts.rowCount()):

@@ -50,6 +50,8 @@ class LayerLoaderDialog(QDialog, DialogUi, SettingDialog):
         self.settings = settings
         self.init_widgets()
 
+        self.setting_widget('wms_image_format').auto_populate()
+
     def on_selection_changed(self):
         self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(len(self.layerTreeWidget.selectedItems()) == 1)
 
