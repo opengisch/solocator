@@ -18,6 +18,7 @@
 """
 
 from copy import deepcopy
+from tempfile import NamedTemporaryFile
 
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QTreeWidgetItem
@@ -80,7 +81,8 @@ def wms_datasource_to_url(wms_datasource: dict, crs: str) -> str:
 
 
 class SoLayer:
-    def __init__(self, name: str, crs: str, wms_datasource: dict, postgis_datasource: dict, description: str):
+    def __init__(self, name: str, crs: str, wms_datasource: dict, postgis_datasource: dict, description: str,
+                 qml: str = None):
         self.name = name
         self.crs = crs
         self.description = description
@@ -91,6 +93,7 @@ class SoLayer:
             postgis_datasource = postgis_datasource[0]
         self.wms_datasource = wms_datasource
         self.postgis_datasource = postgis_datasource
+        self.qml = qml
 
     def __repr__(self):
         return 'SoLayer: {}'.format(self.name)
@@ -107,6 +110,14 @@ class SoLayer:
             uri = postgis_datasource_to_uri(self.postgis_datasource, pg_auth_id)
             if uri:
                 layer = QgsVectorLayer(uri.uri(), self.name, "postgres")
+                if layer.isValid() and self.qml:
+                    with NamedTemporaryFile(mode='w', suffix='.qml', delete=False) as fh:
+                        fh.write(self.qml)
+                        msg, ok = layer.loadNamedStyle(fh.name)
+                        fh.close()
+                        if not ok:
+                            info('SoLocator could not load QML style for layer {}. {}'.format(self.name, msg),
+                                 Qgis.Warning)
         if layer is None:
             url = wms_datasource_to_url(self.wms_datasource, self.crs)
             layer = QgsRasterLayer(url, self.name, 'wms')
