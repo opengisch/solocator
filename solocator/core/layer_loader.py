@@ -66,12 +66,12 @@ class LayerLoader:
             dlg = LayerLoaderDialog(data)
             if dlg.exec_():
                 data = dlg.first_selected_item()
-                (load_as_pg, pg_auth_id) = dlg.try_to_load_as_postgresql()
+                (load_as_pg, wms_load_separate, pg_auth_id) = dlg.try_to_load_as_postgresql()
             else:
                 data = None
 
         if data:
-            data.load(insertion_point, load_as_pg, pg_auth_id)
+            data.load(insertion_point, load_as_pg, wms_load_separate, pg_auth_id)
 
     def reformat_data(self, data: dict):
         """

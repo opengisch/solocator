@@ -65,7 +65,7 @@ class LayerLoaderDialog(QDialog, DialogUi, SettingDialog):
         return self.layerTreeWidget.currentItem().data(0, Qt.UserRole)
 
     def try_to_load_as_postgresql(self) -> tuple:
-        return self.load_as_postgres.isChecked(), self.pg_auth_id.configId()
+        return self.load_as_postgres.isChecked(), self.wms_load_separate.isChecked(), self.pg_auth_id.configId()
 
     def accept(self) -> None:
         if self.load_as_postgres.isChecked() and self.pg_auth_id.configId() == '':

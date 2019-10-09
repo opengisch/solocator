@@ -98,11 +98,17 @@ class SoLayer:
     def __repr__(self):
         return 'SoLayer: {}'.format(self.name)
 
-    def load(self, insertion_point: InsertionPoint, load_as_postgres: bool = False, pg_auth_id: str = None):
+    def load(
+            self,
+            insertion_point: InsertionPoint,
+            load_as_postgres: bool = False,
+            wms_load_separate: bool = True,
+            pg_auth_id: str = None):
         """
         Loads layer in the layer tree
         :param insertion_point: The insertion point in the layer tree (group + position)
         :param load_as_postgres: If True, tries to load layers as postgres if possible
+        :param wms_load_separate: If True, individual layers will be loaded as separate instead of a single one
         :param pg_auth_id: the configuration ID for the authentification
         """
         layer = None
@@ -144,14 +150,16 @@ class SoGroup:
     def __repr__(self):
         return 'SoGroup: {} ( {} )'.format(self.name, ','.join([child.__repr__() for child in self.children]))
 
-    def load(self, insertion_point: InsertionPoint, load_as_postgres: bool, pg_auth_id: str):
+    def load(self, insertion_point: InsertionPoint, load_as_postgres: bool, wms_load_separate: bool, pg_auth_id: str):
         """
         Loads group in the layer tree
         :param insertion_point: The insertion point in the layer tree (group + position)
         :param load_as_postgres: If True, tries to load layers as postgres if possible
+        :param wms_load_separate: If True, individual layers will be loaded as separate instead of a single one
         :param pg_auth_id: the configuration ID for the authentification
         """
-        if not load_as_postgres and self.layer.wms_datasource is not None:
+        if not load_as_postgres and self.layer.wms_datasource is not None and not wms_load_separate:
+
             self.layer.load(insertion_point)
         else:
             if insertion_point.position >= 0:
@@ -160,7 +168,7 @@ class SoGroup:
                 group = insertion_point.group.addGroup(self.name)
 
             for i, child in enumerate(self.children):
-                child.load(InsertionPoint(group, i), load_as_postgres, pg_auth_id)
+                child.load(InsertionPoint(group, i), load_as_postgres, wms_load_separate, pg_auth_id)
 
     def tree_widget_item(self):
         item = QTreeWidgetItem([self.name])
