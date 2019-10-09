@@ -110,7 +110,7 @@ class SoLayer:
             uri = postgis_datasource_to_uri(self.postgis_datasource, pg_auth_id)
             if uri:
                 layer = QgsVectorLayer(uri.uri(), self.name, "postgres")
-                if layer.isValid() and self.qml:
+                if self.qml:
                     with NamedTemporaryFile(mode='w', suffix='.qml', delete=False) as fh:
                         fh.write(self.qml)
                         msg, ok = layer.loadNamedStyle(fh.name)
@@ -122,6 +122,8 @@ class SoLayer:
             url = wms_datasource_to_url(self.wms_datasource, self.crs)
             layer = QgsRasterLayer(url, self.name, 'wms')
         QgsProject.instance().addMapLayer(layer, False)
+        if not layer.isValid():
+            info('Layer {} could not be correctly loaded. Please contact the support.'.format(self.name), Qgis.Warning)
         if insertion_point.position >= 0:
             insertion_point.group.insertLayer(insertion_point.position, layer)
         else:
