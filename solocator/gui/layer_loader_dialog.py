@@ -41,11 +41,9 @@ class LayerLoaderDialog(QDialog, DialogUi, SettingDialog):
         self.layerTreeWidget.setHeaderLabels(['Name'])
         self.layerTreeWidget.setSelectionMode(QAbstractItemView.SingleSelection)
         self.layerTreeWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
-
-        self.layerTreeWidget.setCurrentItem(self.layerTreeWidget.topLevelItem(0))
-
         self.layerTreeWidget.itemSelectionChanged.connect(self.on_selection_changed)
-        self.on_selection_changed()
+        self.layerTreeWidget.setCurrentItem(self.layerTreeWidget.topLevelItem(0))
+        self.layerTreeWidget.expandAll()
 
         self.settings = settings
         self.init_widgets()
