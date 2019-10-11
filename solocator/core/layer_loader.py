@@ -84,7 +84,7 @@ class LayerLoader:
         if data['type'] in (LAYER_GROUP, FACADE_LAYER):
             children = [self.reformat_data(child_data) for child_data in data['sublayers']]
             group_layer = SoLayer(data['display'], crs, data['wms_datasource'], data.get('postgis_datasource'), data.get('description'), data.get('qml'))
-            return SoGroup(data['display'], children, group_layer)
+            return SoGroup(data['display'], children, group_layer, data['type'])
         else:
             return SoLayer(data['display'], crs,
                            data['wms_datasource'], data.get('postgis_datasource'),

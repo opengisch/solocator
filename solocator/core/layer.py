@@ -26,6 +26,7 @@ from qgis.PyQt.QtWidgets import QTreeWidgetItem
 from qgis.core import Qgis, QgsVectorLayer, QgsRasterLayer, QgsProject, QgsDataSourceUri, QgsWkbTypes
 
 from solocator.core.settings import Settings
+from solocator.core.data_products import FACADE_LAYER
 from solocator.core.utils import info
 
 # Compatibility for QGIS < 3.10
@@ -148,10 +149,11 @@ class SoLayer:
 
 
 class SoGroup:
-    def __init__(self, name, children, layer: SoLayer):
+    def __init__(self, name, children, layer: SoLayer, _type: str):
         self.name = name
         self.children = children
         self.layer = layer
+        self.type = _type
 
     def __repr__(self):
         return 'SoGroup: {} ( {} )'.format(self.name, ','.join([child.__repr__() for child in self.children]))
@@ -164,7 +166,9 @@ class SoGroup:
         :param wms_load_separate: If True, individual layers will be loaded as separate instead of a single one
         :param pg_auth_id: the configuration ID for the authentification
         """
-        if not loading_options.load_as_postgres and self.layer.wms_datasource is not None and not loading_options.wms_load_separate:
+        if not loading_options.load_as_postgres \
+                and self.layer.wms_datasource is not None \
+                and (not loading_options.wms_load_separate or self.type == FACADE_LAYER):
             self.layer.load(insertion_point, loading_options)
         else:
             if insertion_point.position >= 0:
