@@ -59,21 +59,21 @@ class LayerLoader:
             else:
                 dbg_info('*** {}: {}'.format(i, v))
 
-        data = self.reformat_data(data)
+        top_level_layer = self.reformat_data(data)
+        layers = []
 
         if open_dialog:
-            dlg = LayerLoaderDialog(data)
+            dlg = LayerLoaderDialog(top_level_layer)
             if dlg.exec_():
-                data = dlg.first_selected_item()
+                layers = dlg.layers()
                 loading_options = dlg.loading_options()
-            else:
-                data = None
         else:
             settings = Settings()
             loading_options = LoadingOptions(settings.value('wms_load_separate'), settings.value('wms_image_format'))
+            layers = [top_level_layer]
 
-        if data:
-            data.load(insertion_point, loading_options)
+        for layer in layers:
+            layer.load(insertion_point, loading_options)
 
     def reformat_data(self, data: dict):
         """

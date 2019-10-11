@@ -19,7 +19,7 @@
 
 import os
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtWidgets import QDialog, QAbstractItemView, QDialogButtonBox, QMessageBox
+from qgis.PyQt.QtWidgets import QDialog, QAbstractItemView, QMessageBox, QTreeWidgetItem
 from qgis.PyQt.uic import loadUiType
 
 from solocator.qgis_setting_manager import SettingDialog, UpdateMode
@@ -39,11 +39,11 @@ class LayerLoaderDialog(QDialog, DialogUi, SettingDialog):
         self.layerTreeWidget.addTopLevelItem(data.tree_widget_item())
         self.layerTreeWidget.setColumnCount(1)
         self.layerTreeWidget.setHeaderLabels(['Name'])
-        self.layerTreeWidget.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.layerTreeWidget.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.layerTreeWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
-
+        self.layerTreeWidget.expandAll()
         self.layerTreeWidget.setCurrentItem(self.layerTreeWidget.topLevelItem(0))
-
+        self.layerTreeWidget.itemChanged.connect(self.on_item_changed)
         self.layerTreeWidget.itemSelectionChanged.connect(self.on_selection_changed)
         self.on_selection_changed()
 
@@ -52,17 +52,64 @@ class LayerLoaderDialog(QDialog, DialogUi, SettingDialog):
 
         self.setting_widget('wms_image_format').auto_populate()
 
-    def on_selection_changed(self):
-        self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(len(self.layerTreeWidget.selectedItems()) == 1)
+    def on_item_changed(self, item: QTreeWidgetItem, column: int):
+        # we assume any change is a check state change
+        if column == 0:
+            self.layerTreeWidget.itemChanged.disconnect(self.on_item_changed)
+            LayerLoaderDialog.check_children(item, item.checkState(0))
+            # if there is any parent checked, we should check the connecting items
+            if item.checkState(0) == Qt.Checked:
+                LayerLoaderDialog.safe_check_parent(item)
+            self.layerTreeWidget.itemChanged.connect(self.on_item_changed)
 
+    @staticmethod
+    def check_children(item: QTreeWidgetItem, check_state: Qt.CheckStateRole):
+        item.setCheckState(0, check_state)
+        item.data(0, Qt.UserRole).loaded = check_state == Qt.Checked
+        for i in range(0, item.childCount()):
+            child = item.child(i)
+            LayerLoaderDialog.check_children(child, check_state)
+
+    @staticmethod
+    def safe_check_parent(item):
+        has_checked_parent = False
+        parent = item.parent()
+        while parent:
+            if parent.checkState(0) == Qt.Checked:
+                has_checked_parent = True
+                break
+            parent = parent.parent()
+        if has_checked_parent:
+            parent = item.parent()
+            while parent:
+                if parent.checkState(0) == Qt.Checked:
+                    # stop when needed
+                    break
+                parent.setCheckState(0, Qt.Checked)
+                item.data(0, Qt.UserRole).loaded = True
+                parent = parent.parent()
+
+    def on_selection_changed(self):
         current_item = self.layerTreeWidget.currentItem().data(0, Qt.UserRole)
         if type(current_item) == SoLayer:
             self.descriptionBrowser.setText(current_item.description)
         else:
             self.descriptionBrowser.clear()
 
-    def first_selected_item(self):
-        return self.layerTreeWidget.currentItem().data(0, Qt.UserRole)
+    def layers(self):
+        # we assume there is only 1 top level item
+        return LayerLoaderDialog.top_checked_layers(self.layerTreeWidget.topLevelItem(0))
+
+    @staticmethod
+    def top_checked_layers(item):
+        layers = []
+        for i in range(0, item.childCount()):
+            child = item.child(i)
+            if child.checkState(0) == Qt.Checked:
+                layers.append(child.data(0, Qt.UserRole))
+            else:
+                layers.extend(LayerLoaderDialog.top_checked_layers(child))
+        return layers
 
     def loading_options(self) -> LoadingOptions:
         return LoadingOptions(self.wms_load_separate.isChecked(), self.wms_image_format.currentText(),

@@ -111,6 +111,15 @@ class SoLayer:
         self.wms_datasource = wms_datasource
         self.postgis_datasource = postgis_datasource
         self.qml = qml
+        self._loaded = True
+
+    @property
+    def loaded(self) -> bool:
+        return self._loaded
+
+    @loaded.setter
+    def loaded(self, value: bool):
+        self._loaded = value
 
     def __repr__(self):
         return 'SoLayer: {}'.format(self.name)
@@ -142,6 +151,8 @@ class SoLayer:
 
     def tree_widget_item(self):
         item = QTreeWidgetItem([self.name])
+        item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+        item.setCheckState(0, Qt.Checked)
         item.setData(0, Qt.UserRole, deepcopy(self))
         return item
 
@@ -151,6 +162,15 @@ class SoGroup:
         self.name = name
         self.children = children
         self.layer = layer
+        self._loaded = True
+
+    @property
+    def loaded(self) -> bool:
+        return self._loaded
+
+    @loaded.setter
+    def loaded(self, value: bool):
+        self._loaded = value
 
     def __repr__(self):
         return 'SoGroup: {} ( {} )'.format(self.name, ','.join([child.__repr__() for child in self.children]))
@@ -172,10 +192,13 @@ class SoGroup:
                 group = insertion_point.group.addGroup(self.name)
 
             for i, child in enumerate(self.children):
-                child.load(InsertionPoint(group, i), loading_options)
+                if child.loaded:
+                    child.load(InsertionPoint(group, i), loading_options)
 
     def tree_widget_item(self):
         item = QTreeWidgetItem([self.name])
+        item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+        item.setCheckState(0, Qt.Checked)
         item.addChildren([child.tree_widget_item() for child in self.children])
         item.setData(0, Qt.UserRole, deepcopy(self))
         return item
