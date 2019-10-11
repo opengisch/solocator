@@ -25,6 +25,7 @@ from qgis.PyQt.QtWidgets import QTreeWidgetItem
 
 from qgis.core import Qgis, QgsVectorLayer, QgsRasterLayer, QgsProject, QgsDataSourceUri, QgsWkbTypes
 
+from solocator.core.settings import Settings
 from solocator.core.utils import info
 
 # Compatibility for QGIS < 3.10
@@ -34,7 +35,7 @@ try:
 except ModuleNotFoundError:
     from .qgs_layer_tree_insertion_point import InsertionPoint, layerTreeInsertionPoint
 
-HOST = 'geodb.rootso.org'
+HOST = Settings().value('pg_host') or 'geodb.rootso.org'
 DB = 'pub'
 PORT = '5432'
 

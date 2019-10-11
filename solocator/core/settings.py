@@ -35,6 +35,9 @@ class Settings(SettingManager):
         self.add_setting(Bool('wms_load_separate', Scope.Global, True))
         self.add_setting(String('wms_image_format', Scope.Global, 'png', allowed_values=('png', 'jpeg')))
 
+        self.add_setting(String('pg_host', Scope.Global, ''))
+
+
         # save only skipped categories so newly added categories will be enabled by default
         self.add_setting(Stringlist('skipped_dataproducts', Scope.Global, None))
 
