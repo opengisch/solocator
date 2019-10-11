@@ -34,7 +34,7 @@ try:
 except ModuleNotFoundError:
     from .qgs_layer_tree_insertion_point import InsertionPoint, layerTreeInsertionPoint
 
-HOST = 'geodb-i.rootso.org'
+HOST = 'geodb.rootso.org'
 DB = 'pub'
 PORT = '5432'
 
