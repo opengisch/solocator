@@ -40,6 +40,10 @@ from solocator.gui.config_dialog import ConfigDialog
 
 import solocator.resources_rc  # NOQA
 
+BASE_URL = Settings().value('service_url') or 'https://geo.so.ch/api'
+SEARCH_URL = '{}/search/v2'.format(BASE_URL)  # see https://geo-t.so.ch/api/search/v2/api/
+FEATURE_URL = '{}/data/v1'.format(BASE_URL)  # see https://geo-t.so.ch/api/data/v1/api/
+DATA_PRODUCT_URL = '{}/dataproduct/v1'.format(BASE_URL)  # see https://geo-t.so.ch/api/dataproduct/v1/api/
 
 
 class FeatureResult:
@@ -179,8 +183,6 @@ class SoLocatorFilter(QgsLocatorFilter):
 
             self.result_found = False
 
-            # see https://geo-t.so.ch/api/search/v2/api/
-            url = 'https://geo-t.so.ch/api/search/v2'
             params = {
                 'searchtext': str(search),
                 'filter': self.enabled_dataproducts(),
@@ -190,7 +192,7 @@ class SoLocatorFilter(QgsLocatorFilter):
 
             nam = NetworkAccessManager()
             feedback.canceled.connect(nam.abort)
-            url = self.url_with_param(url, params)
+            url = self.url_with_param(SEARCH_URL, params)
             dbg_info(url)
             try:
                 (response, content) = nam.request(url, headers=self.HEADERS, blocking=True)
@@ -348,9 +350,8 @@ class SoLocatorFilter(QgsLocatorFilter):
 
     def fetch_feature(self, feature: FeatureResult):
         dbg_info(feature)
-        # see https://geo-t.so.ch/api/data/v1/api/
-        url = 'https://geo-t.so.ch/api/data/v1/{dataset}/{id}'.format(
-            dataset=feature.dataproduct_id, id=feature.feature_id
+        url = '{url}/{dataset}/{id}'.format(
+            url=FEATURE_URL, dataset=feature.dataproduct_id, id=feature.feature_id
         )
         self.nam_fetch_feature = NetworkAccessManager()
         dbg_info(url)
@@ -406,8 +407,7 @@ class SoLocatorFilter(QgsLocatorFilter):
 
     def fetch_data_product(self, product: DataProductResult, open_dialog: bool):
         dbg_info(product)
-        # see https://geo-t.so.ch/api/dataproduct/v1/api/
-        url = 'https://geo-t.so.ch/api/dataproduct/v1/{dataproduct_id}'.format(dataproduct_id=product.dataproduct_id)
+        url = '{url}/{dataproduct_id}'.format(url=DATA_PRODUCT_URL, dataproduct_id=product.dataproduct_id)
         self.nam_fetch_feature = NetworkAccessManager()
         dbg_info(url)
         self.nam_fetch_feature.finished.connect(lambda response: self.parse_data_product_response(response, open_dialog))

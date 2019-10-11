@@ -36,6 +36,7 @@ class Settings(SettingManager):
         self.add_setting(String('wms_image_format', Scope.Global, 'png', allowed_values=('png', 'jpeg')))
 
         self.add_setting(String('pg_host', Scope.Global, ''))
+        self.add_setting(String('service_url', Scope.Global, ''))
 
 
         # save only skipped categories so newly added categories will be enabled by default
