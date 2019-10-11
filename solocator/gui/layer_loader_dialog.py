@@ -24,7 +24,7 @@ from qgis.PyQt.uic import loadUiType
 
 from solocator.qgis_setting_manager import SettingDialog, UpdateMode
 from solocator.core.settings import Settings
-from solocator.core.layer import SoLayer
+from solocator.core.layer import SoLayer, LoadingOptions
 
 DialogUi, _ = loadUiType(os.path.join(os.path.dirname(__file__), '../ui/layer_loader_dialog.ui'))
 
@@ -64,8 +64,9 @@ class LayerLoaderDialog(QDialog, DialogUi, SettingDialog):
     def first_selected_item(self):
         return self.layerTreeWidget.currentItem().data(0, Qt.UserRole)
 
-    def try_to_load_as_postgresql(self) -> tuple:
-        return self.load_as_postgres.isChecked(), self.wms_load_separate.isChecked(), self.pg_auth_id.configId()
+    def loading_options(self) -> LoadingOptions:
+        return LoadingOptions(self.wms_load_separate.isChecked(), self.wms_image_format.currentText(),
+                              self.load_as_postgres.isChecked(), self.pg_auth_id.configId())
 
     def accept(self) -> None:
         if self.load_as_postgres.isChecked() and self.pg_auth_id.configId() == '':

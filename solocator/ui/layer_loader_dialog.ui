@@ -78,7 +78,7 @@
       <item row="0" column="0" colspan="2">
        <widget class="QCheckBox" name="wms_load_separate">
         <property name="text">
-         <string>Als separate Layers laden</string>
+         <string>Als separate Layer laden</string>
         </property>
        </widget>
       </item>

@@ -66,19 +66,36 @@ def postgis_datasource_to_uri(postgis_datasource: dict, pg_auth_id: str) -> QgsD
     return uri
 
 
-def wms_datasource_to_url(wms_datasource: dict, crs: str) -> str:
+def wms_datasource_to_url(wms_datasource: dict, crs: str, image_format: str) -> str:
     url = "contextualWMSLegend=0&" \
           "crs={crs}&" \
           "dpiMode=7&" \
           "featureCount=10&" \
-          "format=image/png&" \
+          "format=image/{image_format}&" \
           "layers={layer}&" \
           "styles&" \
           "url={url}".format(
-        crs=crs, layer=wms_datasource['name'], url=wms_datasource['service_url']
+        crs=crs, image_format=image_format, layer=wms_datasource['name'], url=wms_datasource['service_url']
     )
     return url
 
+
+class LoadingOptions:
+    """
+    A class to hold the loading options
+    """
+    def __init__(self, wms_load_separate: bool, wms_image_format: str,
+                 load_as_postgres: bool = False, pg_auth_id: str = None):
+        """
+        :param wms_load_separate: If True, individual layers will be loaded as separate instead of a single one
+        :param wms_image_format: image format
+        :param load_as_postgres: If True, tries to load layers as postgres if possible
+        :param pg_auth_id: the configuration ID for the authentification
+        """
+        self.load_as_postgres = load_as_postgres
+        self.wms_load_separate = wms_load_separate
+        self.pg_auth_id = pg_auth_id
+        self.wms_image_format = wms_image_format
 
 class SoLayer:
     def __init__(self, name: str, crs: str, wms_datasource: dict, postgis_datasource: dict, description: str,
@@ -98,22 +115,10 @@ class SoLayer:
     def __repr__(self):
         return 'SoLayer: {}'.format(self.name)
 
-    def load(
-            self,
-            insertion_point: InsertionPoint,
-            load_as_postgres: bool = False,
-            wms_load_separate: bool = True,
-            pg_auth_id: str = None):
-        """
-        Loads layer in the layer tree
-        :param insertion_point: The insertion point in the layer tree (group + position)
-        :param load_as_postgres: If True, tries to load layers as postgres if possible
-        :param wms_load_separate: If True, individual layers will be loaded as separate instead of a single one
-        :param pg_auth_id: the configuration ID for the authentification
-        """
+    def load(self, insertion_point: InsertionPoint, loading_options: LoadingOptions):
         layer = None
-        if self.postgis_datasource is not None and load_as_postgres:
-            uri = postgis_datasource_to_uri(self.postgis_datasource, pg_auth_id)
+        if self.postgis_datasource is not None and loading_options.load_as_postgres:
+            uri = postgis_datasource_to_uri(self.postgis_datasource, loading_options.pg_auth_id)
             if uri:
                 layer = QgsVectorLayer(uri.uri(), self.name, "postgres")
                 if self.qml:
@@ -125,7 +130,7 @@ class SoLayer:
                             info('SoLocator could not load QML style for layer {}. {}'.format(self.name, msg),
                                  Qgis.Warning)
         if layer is None:
-            url = wms_datasource_to_url(self.wms_datasource, self.crs)
+            url = wms_datasource_to_url(self.wms_datasource, self.crs, loading_options.wms_image_format)
             layer = QgsRasterLayer(url, self.name, 'wms')
         QgsProject.instance().addMapLayer(layer, False)
         if not layer.isValid():
@@ -150,7 +155,7 @@ class SoGroup:
     def __repr__(self):
         return 'SoGroup: {} ( {} )'.format(self.name, ','.join([child.__repr__() for child in self.children]))
 
-    def load(self, insertion_point: InsertionPoint, load_as_postgres: bool, wms_load_separate: bool, pg_auth_id: str):
+    def load(self, insertion_point: InsertionPoint, loading_options: LoadingOptions):
         """
         Loads group in the layer tree
         :param insertion_point: The insertion point in the layer tree (group + position)
@@ -158,8 +163,8 @@ class SoGroup:
         :param wms_load_separate: If True, individual layers will be loaded as separate instead of a single one
         :param pg_auth_id: the configuration ID for the authentification
         """
-        if not load_as_postgres and self.layer.wms_datasource is not None and not wms_load_separate:
-            self.layer.load(insertion_point)
+        if not loading_options.load_as_postgres and self.layer.wms_datasource is not None and not loading_options.wms_load_separate:
+            self.layer.load(insertion_point, loading_options)
         else:
             if insertion_point.position >= 0:
                 group = insertion_point.group.insertGroup(insertion_point.position, self.name)
@@ -167,7 +172,7 @@ class SoGroup:
                 group = insertion_point.group.addGroup(self.name)
 
             for i, child in enumerate(self.children):
-                child.load(InsertionPoint(group, i), load_as_postgres, wms_load_separate, pg_auth_id)
+                child.load(InsertionPoint(group, i), loading_options)
 
     def tree_widget_item(self):
         item = QTreeWidgetItem([self.name])

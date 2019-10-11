@@ -20,7 +20,7 @@
 
 from qgis.gui import QgisInterface
 
-from solocator.core.layer import SoLayer, SoGroup
+from solocator.core.layer import SoLayer, SoGroup, LoadingOptions
 from solocator.core.data_products import LAYER_GROUP, FACADE_LAYER
 from solocator.core.utils import dbg_info
 from solocator.core.settings import Settings
@@ -60,20 +60,20 @@ class LayerLoader:
                 dbg_info('*** {}: {}'.format(i, v))
 
         data = self.reformat_data(data)
-        load_as_pg = False
-        pg_auth_id = None
-        wms_load_separate = Settings().value('wms_load_separate')
 
         if open_dialog:
             dlg = LayerLoaderDialog(data)
             if dlg.exec_():
                 data = dlg.first_selected_item()
-                (load_as_pg, wms_load_separate, pg_auth_id) = dlg.try_to_load_as_postgresql()
+                loading_options = dlg.loading_options()
             else:
                 data = None
+        else:
+            settings = Settings()
+            loading_options = LoadingOptions(settings.value('wms_load_separate'), settings.value('wms_image_format'))
 
         if data:
-            data.load(insertion_point, load_as_pg, wms_load_separate, pg_auth_id)
+            data.load(insertion_point, loading_options)
 
     def reformat_data(self, data: dict):
         """
