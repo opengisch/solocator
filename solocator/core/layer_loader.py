@@ -23,6 +23,7 @@ from qgis.gui import QgisInterface
 from solocator.core.layer import SoLayer, SoGroup
 from solocator.core.data_products import LAYER_GROUP, FACADE_LAYER
 from solocator.core.utils import dbg_info
+from solocator.core.settings import Settings
 from solocator.gui.layer_loader_dialog import LayerLoaderDialog
 
 DEFAULT_CRS = 'EPSG:2056'
@@ -61,6 +62,7 @@ class LayerLoader:
         data = self.reformat_data(data)
         load_as_pg = False
         pg_auth_id = None
+        wms_load_separate = Settings().value('wms_load_separate')
 
         if open_dialog:
             dlg = LayerLoaderDialog(data)

@@ -159,7 +159,6 @@ class SoGroup:
         :param pg_auth_id: the configuration ID for the authentification
         """
         if not load_as_postgres and self.layer.wms_datasource is not None and not wms_load_separate:
-
             self.layer.load(insertion_point)
         else:
             if insertion_point.position >= 0:
