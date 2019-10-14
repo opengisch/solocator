@@ -127,7 +127,7 @@ class SoLayer:
         if self.postgis_datasource is not None and loading_options.load_as_postgres:
             uri = postgis_datasource_to_uri(self.postgis_datasource, loading_options.pg_auth_id, loading_options.pg_service)
             if uri:
-                layer = QgsVectorLayer(uri.uri(), self.name, "postgres")
+                layer = QgsVectorLayer(uri.uri(False), self.name, "postgres")
                 if self.qml:
                     with NamedTemporaryFile(mode='w', suffix='.qml', delete=False) as fh:
                         fh.write(self.qml)
