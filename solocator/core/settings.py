@@ -34,10 +34,11 @@ class Settings(SettingManager):
         self.add_setting(String('pg_auth_id', Scope.Global, None))
         self.add_setting(Bool('wms_load_separate', Scope.Global, True))
         self.add_setting(String('wms_image_format', Scope.Global, 'png', allowed_values=('png', 'jpeg')))
+        self.add_setting(String('pg_service', Scope.Global, 'pub'))
+        self.add_setting(String('pg_connection_mode', Scope.Global, 'pg_service'))
 
         self.add_setting(String('pg_host', Scope.Global, ''))
         self.add_setting(String('service_url', Scope.Global, ''))
-
 
         # save only skipped categories so newly added categories will be enabled by default
         self.add_setting(Stringlist('skipped_dataproducts', Scope.Global, None))

@@ -41,9 +41,12 @@ DB = 'pub'
 PORT = '5432'
 
 
-def postgis_datasource_to_uri(postgis_datasource: dict, pg_auth_id: str) -> QgsDataSourceUri:
+def postgis_datasource_to_uri(postgis_datasource: dict, pg_auth_id: str, pg_service: str) -> QgsDataSourceUri:
     uri = QgsDataSourceUri()
-    uri.setConnection(HOST, PORT, DB, None, None, QgsDataSourceUri.SslPrefer, pg_auth_id)
+    if pg_auth_id:
+        uri.setConnection(HOST, PORT, DB, None, None, QgsDataSourceUri.SslPrefer, pg_auth_id)
+    else:
+        uri.setConnection(pg_service, None, None, None, QgsDataSourceUri.SslPrefer)
     [schema, table_name] = postgis_datasource['data_set_name'].split('.')
     uri.setDataSource(schema, table_name, postgis_datasource['geometry_field'])
     uri.setKeyColumn(postgis_datasource['primary_key'])
@@ -87,16 +90,18 @@ class LoadingOptions:
     A class to hold the loading options
     """
     def __init__(self, wms_load_separate: bool, wms_image_format: str,
-                 load_as_postgres: bool = False, pg_auth_id: str = None):
+                 load_as_postgres: bool = False, pg_auth_id: str = None, pg_service: str = None):
         """
         :param wms_load_separate: If True, individual layers will be loaded as separate instead of a single one
         :param wms_image_format: image format
         :param load_as_postgres: If True, tries to load layers as postgres if possible
         :param pg_auth_id: the configuration ID for the authentification
+        :param pg_service: the PG service nate
         """
         self.load_as_postgres = load_as_postgres
         self.wms_load_separate = wms_load_separate
         self.pg_auth_id = pg_auth_id
+        self.pg_service = pg_service
         self.wms_image_format = wms_image_format
 
 class SoLayer:
@@ -120,7 +125,7 @@ class SoLayer:
     def load(self, insertion_point: InsertionPoint, loading_options: LoadingOptions):
         layer = None
         if self.postgis_datasource is not None and loading_options.load_as_postgres:
-            uri = postgis_datasource_to_uri(self.postgis_datasource, loading_options.pg_auth_id)
+            uri = postgis_datasource_to_uri(self.postgis_datasource, loading_options.pg_auth_id, loading_options.pg_service)
             if uri:
                 layer = QgsVectorLayer(uri.uri(), self.name, "postgres")
                 if self.qml:
@@ -162,9 +167,7 @@ class SoGroup:
         """
         Loads group in the layer tree
         :param insertion_point: The insertion point in the layer tree (group + position)
-        :param load_as_postgres: If True, tries to load layers as postgres if possible
-        :param wms_load_separate: If True, individual layers will be loaded as separate instead of a single one
-        :param pg_auth_id: the configuration ID for the authentification
+        :param load_options: the configuration to load layers
         """
         if not loading_options.load_as_postgres \
                 and self.layer.wms_datasource is not None \

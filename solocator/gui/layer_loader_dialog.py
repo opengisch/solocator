@@ -45,6 +45,9 @@ class LayerLoaderDialog(QDialog, DialogUi, SettingDialog):
         self.layerTreeWidget.setCurrentItem(self.layerTreeWidget.topLevelItem(0))
         self.layerTreeWidget.expandAll()
 
+        self.service_mode.toggled.connect(self.pg_service.setEnabled)
+        self.auth_config_mode.toggled.connect(self.pg_auth_id.setEnabled)
+
         self.settings = settings
         self.init_widgets()
 
@@ -63,8 +66,14 @@ class LayerLoaderDialog(QDialog, DialogUi, SettingDialog):
         return self.layerTreeWidget.currentItem().data(0, Qt.UserRole)
 
     def loading_options(self) -> LoadingOptions:
+        pg_auth_id = None
+        pg_service = None
+        if self.auth_config_mode.isChecked():
+            pg_auth_id = self.pg_auth_id.configId()
+        if self.service_mode.isChecked():
+            pg_service = self.pg_service.text()
         return LoadingOptions(self.wms_load_separate.isChecked(), self.wms_image_format.currentText(),
-                              self.load_as_postgres.isChecked(), self.pg_auth_id.configId())
+                              self.load_as_postgres.isChecked(), pg_auth_id, pg_service)
 
     def accept(self) -> None:
         if self.load_as_postgres.isChecked() and self.pg_auth_id.configId() == '':

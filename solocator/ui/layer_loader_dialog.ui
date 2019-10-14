@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>519</width>
-    <height>466</height>
+    <width>594</width>
+    <height>605</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -30,8 +30,38 @@
       <bool>true</bool>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
+      <item row="3" column="0">
+       <widget class="QgsAuthConfigSelect" name="pg_auth_id" native="true">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="0">
-       <widget class="QgsAuthConfigSelect" name="pg_auth_id" native="true"/>
+       <widget class="QRadioButton" name="service_mode">
+        <property name="text">
+         <string>Verwenden Sie den PostgreSQL-Dienstnamen</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">pg_connection_mode</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QRadioButton" name="auth_config_mode">
+        <property name="text">
+         <string>Verwenden Sie die Authentifizierungskonfiguration</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">pg_connection_mode</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLineEdit" name="pg_service"/>
       </item>
      </layout>
     </widget>
@@ -139,8 +169,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>254</y>
+     <x>254</x>
+     <y>600</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -155,8 +185,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>316</x>
-     <y>260</y>
+     <x>322</x>
+     <y>600</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -165,4 +195,7 @@
    </hints>
   </connection>
  </connections>
+ <buttongroups>
+  <buttongroup name="pg_connection_mode"/>
+ </buttongroups>
 </ui>
