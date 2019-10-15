@@ -46,7 +46,7 @@ def dataproduct2icon_description(data_product: str, layer_type: str) -> QIcon:
     if data_product == 'dataproduct':
         if layer_type == LAYER_GROUP:
             label = 'Layergruppe'
-            icon = QIcon(":/plugins/solocator/icons/results/layergroup_open.svg")
+            icon = QIcon(":/plugins/solocator/icons/results/ebene.svg")
         else:
             label = DATAPRODUCT_TYPE_TRANSLATION[layer_type]
             icon = QIcon(":/plugins/solocator/icons/results/ebene.svg")
