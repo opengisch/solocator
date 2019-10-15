@@ -232,7 +232,7 @@ class SoLocatorFilter(QgsLocatorFilter):
                 for _filter in data['result_counts']:
                     result = QgsLocatorResult()
                     result.filter = self
-                    result.group = 'Suche einschränken'
+                    result.group = 'Suche verfeinern'
                     result.displayString = _filter['filterword']
                     if _filter['count']:
                         result.displayString += ' ({})'.format(_filter['count'])
