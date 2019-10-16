@@ -216,6 +216,23 @@ class SoLocatorFilter(QgsLocatorFilter):
             info('{} {} {}'.format(exc_type, filename, exc_traceback.tb_lineno), Qgis.Critical)
             info(traceback.print_exception(exc_type, exc_obj, exc_traceback), Qgis.Critical)
 
+    def data_product_qgsresult(self, data: dict) -> QgsLocatorResult:
+        result = QgsLocatorResult()
+        result.filter = self
+        result.displayString = data['display']
+        result.group = 'Karten'
+        result.userData = DataProductResult(
+            type=data['type'],
+            dataproduct_id=data['dataproduct_id'],
+            display=data['display'],
+            dset_info=data['dset_info'],
+            sublayers=data.get('sublayers', None)
+        )
+        data_product = 'dataproduct'
+        data_type = data['type']
+        result.icon, result.description = dataproduct2icon_description(data_product, data_type)
+        return result
+
     def handle_response(self, response, search_text: str):
         try:
             if response.status_code != 200:
@@ -260,30 +277,25 @@ class SoLocatorFilter(QgsLocatorFilter):
                     )
                     data_product = f['dataproduct_id']
                     data_type = None
+                    result.icon, result.description = dataproduct2icon_description(data_product, data_type)
+                    self.resultFetched.emit(result)
 
                 elif 'dataproduct' in res.keys():
                     dp = res['dataproduct']
                     # dbg_info("data_product: {}".format(dp))
-                    result = QgsLocatorResult()
-                    result.filter = self
-                    result.displayString = dp['display']
-                    result.group = 'Karten'
-                    result.userData = DataProductResult(
-                        type=dp['type'],
-                        dataproduct_id=dp['dataproduct_id'],
-                        display=dp['display'],
-                        dset_info=dp['dset_info'],
-                        sublayers=dp.get('sublayers', None)
-                    )
-                    data_product = 'dataproduct'
-                    data_type = dp['type']
+                    result = self.data_product_qgsresult(dp)
+                    self.resultFetched.emit(result)
+
+                    # also give sublayers for which text matches
+                    for layer in dp.get('sublayers', []):
+                        if search_text.lower() in layer['display'].lower():
+                            result = self.data_product_qgsresult(layer)
+                            self.resultFetched.emit(result)
 
                 else:
                     continue
 
-                result.icon, result.description = dataproduct2icon_description(data_product, data_type)
                 self.result_found = True
-                self.resultFetched.emit(result)
 
         except Exception as e:
             info(str(e), Qgis.Critical)
