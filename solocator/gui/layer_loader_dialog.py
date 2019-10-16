@@ -78,10 +78,10 @@ class LayerLoaderDialog(QDialog, DialogUi, SettingDialog):
         if self.service_mode.isChecked():
             pg_service = self.pg_service.text()
         return LoadingOptions(self.wms_load_separate.isChecked(), self.wms_image_format.currentText(),
-                              self.load_as_postgres.isChecked(), pg_auth_id, pg_service)
+                              self.postgres.isChecked(), pg_auth_id, pg_service)
 
     def accept(self) -> None:
-        if self.load_as_postgres.isChecked() and self.pg_auth_id.configId() == '':
+        if self.postgres.isChecked() and self.pg_auth_id.configId() == '':
             button = QMessageBox.question(self, 'Posgres authentification',
                                           'No authentification method has been defined. Are you sure to continue?')
             if button == QMessageBox.Yes:
