@@ -14,22 +14,18 @@
    <string>SoLocator</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="2" column="0">
-    <widget class="QLabel" name="label">
-     <property name="text">
-      <string>Eine Auswahl der Layer laden:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="0">
-    <widget class="QgsCollapsibleGroupBox" name="load_as_postgres">
+   <item row="1" column="0">
+    <widget class="QGroupBox" name="postgres_config_groupbox">
      <property name="title">
-      <string>Versuche Layer als PostgreSQL zu laden</string>
+      <string/>
      </property>
      <property name="checkable">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
+      <item row="1" column="0">
+       <widget class="QLineEdit" name="pg_service"/>
+      </item>
       <item row="3" column="0">
        <widget class="QgsAuthConfigSelect" name="pg_auth_id" native="true">
         <property name="enabled">
@@ -60,13 +56,34 @@
         </attribute>
        </widget>
       </item>
-      <item row="1" column="0">
-       <widget class="QLineEdit" name="pg_service"/>
-      </item>
      </layout>
     </widget>
    </item>
-   <item row="6" column="0">
+   <item row="0" column="0">
+    <widget class="QRadioButton" name="postgres">
+     <property name="text">
+      <string>Versuche Layer als PostgreSQL zu laden</string>
+     </property>
+     <attribute name="buttonGroup">
+      <string notr="true">layer_loading_mode</string>
+     </attribute>
+    </widget>
+   </item>
+   <item row="8" column="0">
+    <widget class="QTextEdit" name="descriptionBrowser">
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Beschreibung</string>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="0">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -76,21 +93,24 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="0">
-    <widget class="QLabel" name="label_2">
+   <item row="3" column="0">
+    <widget class="QRadioButton" name="wms">
      <property name="text">
-      <string>Beschreibung</string>
+      <string>Versuche Layer als WMS zu laden</string>
      </property>
+     <attribute name="buttonGroup">
+      <string notr="true">layer_loading_mode</string>
+     </attribute>
     </widget>
    </item>
    <item row="5" column="0">
-    <widget class="QTextEdit" name="descriptionBrowser">
-     <property name="readOnly">
-      <bool>true</bool>
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Eine Auswahl der Layer laden:</string>
      </property>
     </widget>
    </item>
-   <item row="3" column="0">
+   <item row="6" column="0">
     <widget class="QTreeWidget" name="layerTreeWidget">
      <column>
       <property name="text">
@@ -99,10 +119,10 @@
      </column>
     </widget>
    </item>
-   <item row="1" column="0">
-    <widget class="QGroupBox" name="groupBox">
+   <item row="4" column="0">
+    <widget class="QGroupBox" name="wms_config_groupbox">
      <property name="title">
-      <string>WMS-Einstellungen</string>
+      <string/>
      </property>
      <layout class="QGridLayout" name="gridLayout_3">
       <item row="0" column="0" colspan="2">
@@ -148,12 +168,6 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>QgsCollapsibleGroupBox</class>
-   <extends>QGroupBox</extends>
-   <header>qgis.gui</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>QgsAuthConfigSelect</class>
    <extends>QWidget</extends>
    <header>qgis.gui</header>
@@ -197,5 +211,6 @@
  </connections>
  <buttongroups>
   <buttongroup name="pg_connection_mode"/>
+  <buttongroup name="layer_loading_mode"/>
  </buttongroups>
 </ui>

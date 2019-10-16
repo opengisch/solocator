@@ -48,6 +48,11 @@ class LayerLoaderDialog(QDialog, DialogUi, SettingDialog):
         self.service_mode.toggled.connect(self.pg_service.setEnabled)
         self.auth_config_mode.toggled.connect(self.pg_auth_id.setEnabled)
 
+        self.wms_config_groupbox.setEnabled(False)
+        self.postgres_config_groupbox.setEnabled(False)
+        self.wms.toggled.connect(self.wms_config_groupbox.setEnabled)
+        self.postgres.toggled.connect(self.postgres_config_groupbox.setEnabled)
+
         self.settings = settings
         self.init_widgets()
 
