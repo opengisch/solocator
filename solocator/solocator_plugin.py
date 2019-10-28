@@ -2,8 +2,8 @@
 """
 /***************************************************************************
 
- QGIS Swiss Locator Plugin
- Copyright (C) 2018 Denis Rouzaud
+ QGIS SOLocator Plugin
+ Copyright (C) 2019 Denis Rouzaud, OPENGIS.ch
 
  ***************************************************************************/
 
