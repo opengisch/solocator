@@ -176,7 +176,7 @@
    <item row="5" column="0">
     <widget class="QLabel" name="scale_label">
      <property name="text">
-      <string>Massstab beim Identifizieren eines Punktes (or Lokalisieren)</string>
+      <string>Massstab beim Lokalisieren eines Punktes</string>
      </property>
     </widget>
    </item>
