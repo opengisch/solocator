@@ -216,10 +216,10 @@ class SoLocatorFilter(QgsLocatorFilter):
             info('{} {} {}'.format(exc_type, filename, exc_traceback.tb_lineno), Qgis.Critical)
             info(traceback.print_exception(exc_type, exc_obj, exc_traceback), Qgis.Critical)
 
-    def data_product_qgsresult(self, data: dict) -> QgsLocatorResult:
+    def data_product_qgsresult(self, data: dict, sub_layer: bool, score: float) -> QgsLocatorResult:
         result = QgsLocatorResult()
         result.filter = self
-        result.displayString = data['display']
+        result.displayString = '{prefix}{title}'.format(prefix=' ↳ ' if sub_layer else '', title=data['display'])
         result.group = 'Karten'
         result.userData = DataProductResult(
             type=data['type'],
@@ -231,6 +231,7 @@ class SoLocatorFilter(QgsLocatorFilter):
         data_product = 'dataproduct'
         data_type = data['type']
         result.icon, result.description = dataproduct2icon_description(data_product, data_type)
+        result.score = score
         return result
 
     def handle_response(self, response, search_text: str):
@@ -242,6 +243,10 @@ class SoLocatorFilter(QgsLocatorFilter):
                 return
 
             data = json.loads(response.content.decode('utf-8'))
+
+            # Since results are ordered by score (0 to 1)
+            # we use an ordering score to keep the same order than the one from the remote service
+            score = 1
 
             # sub-filtering
             # dbg_info(data['result_counts'])
@@ -256,7 +261,9 @@ class SoLocatorFilter(QgsLocatorFilter):
                     dbg_info(_filter)
                     result.icon, _ = dataproduct2icon_description(_filter['dataproduct_id'], 'datasetview')
                     result.userData = FilterResult(_filter['filterword'], search_text)
+                    result.score = score
                     self.resultFetched.emit(result)
+                    score -= 0.001
 
             for res in data['results']:
                 # dbg_info(res)
@@ -278,19 +285,23 @@ class SoLocatorFilter(QgsLocatorFilter):
                     data_product = f['dataproduct_id']
                     data_type = None
                     result.icon, result.description = dataproduct2icon_description(data_product, data_type)
+                    result.score = score
                     self.resultFetched.emit(result)
+                    score -= 0.001
 
                 elif 'dataproduct' in res.keys():
                     dp = res['dataproduct']
                     # dbg_info("data_product: {}".format(dp))
-                    result = self.data_product_qgsresult(dp)
+                    result = self.data_product_qgsresult(dp, False, score)
                     self.resultFetched.emit(result)
+                    score -= 0.001
 
                     # also give sublayers for which text matches
                     for layer in dp.get('sublayers', []):
                         if search_text.lower() in layer['display'].lower():
-                            result = self.data_product_qgsresult(layer)
+                            result = self.data_product_qgsresult(layer, True, score)
                             self.resultFetched.emit(result)
+                            score -= 0.001
 
                 else:
                     continue
