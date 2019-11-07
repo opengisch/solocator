@@ -2,6 +2,7 @@
     <qresource prefix="/plugins/solocator">
         <file>icons/solocator.png</file>
         <file>icons/results/ebene.svg</file>
+        <file>icons/results/einzel-ebene.svg</file>
         <file>icons/results/layergroup_open.svg</file>
         <file>icons/results/adresse.svg</file>
         <file>icons/results/gemeinde.svg</file>

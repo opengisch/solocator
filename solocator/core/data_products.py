@@ -49,7 +49,7 @@ def dataproduct2icon_description(data_product: str, layer_type: str) -> QIcon:
             icon = QIcon(":/plugins/solocator/icons/results/ebene.svg")
         else:
             label = DATAPRODUCT_TYPE_TRANSLATION[layer_type]
-            icon = QIcon(":/plugins/solocator/icons/results/ebene.svg")
+            icon = QIcon(":/plugins/solocator/icons/results/einzel-ebene.svg")
 
     elif data_product.startswith('ch.so.agi.av.gebaeudeadressen.gebaeudeeingaenge'):
         label = 'Adresse'
