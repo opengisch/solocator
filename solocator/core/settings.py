@@ -36,9 +36,9 @@ class Settings(SettingManager):
         self.add_setting(String('wms_image_format', Scope.Global, 'png', allowed_values=('png', 'jpeg')))
 
         self.add_setting(String('pg_auth_id', Scope.Global, None))
-        self.add_setting(String('pg_service', Scope.Global, 'pub'))
 
         # these settings should be empty, but can be overwritten for testing purpose
+        self.add_setting(String('pg_service', Scope.Global, ''))
         self.add_setting(String('pg_host', Scope.Global, ''))
         self.add_setting(String('service_url', Scope.Global, ''))
 
@@ -50,5 +50,8 @@ PG_HOST = Settings().value('pg_host') or 'geodb.rootso.org'
 PG_DB = 'pub'
 PG_PORT = '5432'
 
-
+BASE_URL = Settings().value('service_url') or 'https://geo.so.ch/api'
+SEARCH_URL = '{}/search/v2'.format(BASE_URL)  # see https://geo-t.so.ch/api/search/v2/api/
+FEATURE_URL = '{}/data/v1'.format(BASE_URL)  # see https://geo-t.so.ch/api/data/v1/api/
+DATA_PRODUCT_URL = '{}/dataproduct/v1'.format(BASE_URL)  # see https://geo-t.so.ch/api/dataproduct/v1/api/
 

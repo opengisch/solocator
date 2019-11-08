@@ -8,10 +8,11 @@ Integration in die QGIS Suche für dieGeodateninfrastruktur im Kanton Solothurn.
 
 https://github.com/opengisch/solocator/releases/latest/download/plugins.xml
 
-### Advanced settings
+### Advanced settings for testing purpose
 
 In QGIS preferences, under advanced settings:
 * Service URL: plugins/solocator/service_url (leave empty to use default)
+* PostgreSQL service: plugins/solocator/pg_service (leave empty to use default, if given it should contain the DB name) 
 * PostgreSQL hostname: plugins/solocator/pg_host (leave empty to use default) 
 
 ### API

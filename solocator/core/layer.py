@@ -61,10 +61,10 @@ class LoadingMode(Enum):
 
 def postgis_datasource_to_uri(postgis_datasource: dict, pg_auth_id: str, pg_service: str) -> QgsDataSourceUri:
     uri = QgsDataSourceUri()
-    if pg_auth_id:
+    if not pg_service:
         uri.setConnection(settings.PG_HOST, settings.PG_PORT, settings.PG_DB, None, None, QgsDataSourceUri.SslPrefer, pg_auth_id)
     else:
-        uri.setConnection(pg_service, None, None, None, QgsDataSourceUri.SslPrefer)
+        uri.setConnection(pg_service, None, None, None, QgsDataSourceUri.SslPrefer, pg_auth_id)
     [schema, table_name] = postgis_datasource['data_set_name'].split('.')
     uri.setDataSource(schema, table_name, postgis_datasource['geometry_field'])
     uri.setKeyColumn(postgis_datasource['primary_key'])
@@ -153,7 +153,7 @@ class SoLayer:
                         msg, ok = layer.loadNamedStyle(fh.name)
                         fh.close()
                         if not ok:
-                            info('SoLocator could not load QML style for layer {}. {}'.format(self.name, msg),
+                            info('SoLocator could not load QML style for layer {}. {} URI:{}'.format(self.name, msg, uri),
                                  Qgis.Warning)
         if layer is None:
             url = wms_datasource_to_url(self.wms_datasource, self.crs, loading_options.wms_image_format)

@@ -32,18 +32,13 @@ from qgis.core import Qgis, QgsLocatorFilter, QgsLocatorResult, QgsCoordinateRef
 from qgis.gui import QgsRubberBand, QgisInterface, QgsMapCanvas, QgsFilterLineEdit
 
 from solocator.core.network_access_manager import NetworkAccessManager, RequestsException, RequestsExceptionUserAbort
-from solocator.core.settings import Settings
+from solocator.core.settings import Settings, BASE_URL, SEARCH_URL, FEATURE_URL, DATA_PRODUCT_URL
 from solocator.core.layer_loader import LayerLoader
 from solocator.core.data_products import DATA_PRODUCTS, dataproduct2icon_description
 from solocator.core.utils import dbg_info, info
 from solocator.gui.config_dialog import ConfigDialog
 
 import solocator.resources_rc  # NOQA
-
-BASE_URL = Settings().value('service_url') or 'https://geo.so.ch/api'
-SEARCH_URL = '{}/search/v2'.format(BASE_URL)  # see https://geo-t.so.ch/api/search/v2/api/
-FEATURE_URL = '{}/data/v1'.format(BASE_URL)  # see https://geo-t.so.ch/api/data/v1/api/
-DATA_PRODUCT_URL = '{}/dataproduct/v1'.format(BASE_URL)  # see https://geo-t.so.ch/api/dataproduct/v1/api/
 
 
 class FeatureResult:
