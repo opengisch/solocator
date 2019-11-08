@@ -141,7 +141,7 @@ class SoLayer:
     def __repr__(self):
         return 'SoLayer: {}'.format(self.name)
 
-    def load(self, insertion_point: InsertionPoint, loading_options: LoadingOptions):
+    def load(self, insertion_point: InsertionPoint, loading_options: LoadingOptions) -> bool:
         layer = None
         if self.postgis_datasource is not None and loading_options.loading_mode == LoadingMode.PG:
             uri = postgis_datasource_to_uri(self.postgis_datasource, loading_options.pg_auth_id, loading_options.pg_service)
@@ -161,10 +161,13 @@ class SoLayer:
         QgsProject.instance().addMapLayer(layer, False)
         if not layer.isValid():
             info('Layer {} could not be correctly loaded. Please contact the support.'.format(self.name), Qgis.Warning)
-        if insertion_point.position >= 0:
-            insertion_point.group.insertLayer(insertion_point.position, layer)
+            return False
         else:
-            insertion_point.group.addLayer(layer)
+            if insertion_point.position >= 0:
+                insertion_point.group.insertLayer(insertion_point.position, layer)
+            else:
+                insertion_point.group.addLayer(layer)
+            return True
 
     def tree_widget_item(self):
         item = QTreeWidgetItem([self.name])
