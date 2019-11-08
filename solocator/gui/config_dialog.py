@@ -67,8 +67,9 @@ class ConfigDialog(QDialog, DialogUi, SettingDialog):
         sd_widget.userdata = True
         sd_widget.invert = True
 
-        img_widget: ComboStringWidget = self.setting_widget('wms_image_format')
-        img_widget.auto_populate()
+        self.setting_widget('wms_image_format').auto_populate()
+        self.setting_widget('default_layer_loading_mode').auto_populate()
+
 
     def select_all(self, select: bool = True):
         for r in range(self.skipped_dataproducts.rowCount()):

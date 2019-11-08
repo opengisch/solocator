@@ -19,13 +19,14 @@
 
 from copy import deepcopy
 from tempfile import NamedTemporaryFile
+from enum import Enum
 
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QTreeWidgetItem
 
 from qgis.core import Qgis, QgsVectorLayer, QgsRasterLayer, QgsProject, QgsDataSourceUri, QgsWkbTypes
 
-from solocator.core.settings import Settings
+import solocator.core.settings as settings
 from solocator.core.data_products import FACADE_LAYER
 from solocator.core.utils import info
 
@@ -36,15 +37,24 @@ try:
 except ModuleNotFoundError:
     from .qgs_layer_tree_insertion_point import InsertionPoint, layerTreeInsertionPoint
 
-HOST = Settings().value('pg_host') or 'geodb.rootso.org'
-DB = 'pub'
-PORT = '5432'
+
+class LoadingMode(Enum):
+    PG = 1
+    WMS = 2
+
+    def __str__(self):
+        if self.value == LoadingMode.PG.value:
+            return 'PostgreSQL'
+        elif self.value == LoadingMode.WMS.value:
+            return 'WMS'
+        else:
+            return self.name
 
 
 def postgis_datasource_to_uri(postgis_datasource: dict, pg_auth_id: str, pg_service: str) -> QgsDataSourceUri:
     uri = QgsDataSourceUri()
     if pg_auth_id:
-        uri.setConnection(HOST, PORT, DB, None, None, QgsDataSourceUri.SslPrefer, pg_auth_id)
+        uri.setConnection(settings.PG_HOST, settings.PG_PORT, settings.PG_DB, None, None, QgsDataSourceUri.SslPrefer, pg_auth_id)
     else:
         uri.setConnection(pg_service, None, None, None, QgsDataSourceUri.SslPrefer)
     [schema, table_name] = postgis_datasource['data_set_name'].split('.')
@@ -90,19 +100,20 @@ class LoadingOptions:
     A class to hold the loading options
     """
     def __init__(self, wms_load_separate: bool, wms_image_format: str,
-                 load_as_postgres: bool = False, pg_auth_id: str = None, pg_service: str = None):
+                 loading_mode: LoadingMode, pg_auth_id: str = None, pg_service: str = None):
         """
         :param wms_load_separate: If True, individual layers will be loaded as separate instead of a single one
         :param wms_image_format: image format
-        :param load_as_postgres: If True, tries to load layers as postgres if possible
+        :param loading_mode: the LoadingMode (WMS or PostgreSQL)
         :param pg_auth_id: the configuration ID for the authentification
         :param pg_service: the PG service nate
         """
-        self.load_as_postgres = load_as_postgres
+        self.loading_mode = loading_mode
         self.wms_load_separate = wms_load_separate
         self.pg_auth_id = pg_auth_id
         self.pg_service = pg_service
         self.wms_image_format = wms_image_format
+
 
 class SoLayer:
     def __init__(self, name: str, crs: str, wms_datasource: dict, postgis_datasource: dict, description: str,
@@ -124,7 +135,7 @@ class SoLayer:
 
     def load(self, insertion_point: InsertionPoint, loading_options: LoadingOptions):
         layer = None
-        if self.postgis_datasource is not None and loading_options.load_as_postgres:
+        if self.postgis_datasource is not None and loading_options.loading_mode == LoadingMode.PG:
             uri = postgis_datasource_to_uri(self.postgis_datasource, loading_options.pg_auth_id, loading_options.pg_service)
             if uri:
                 layer = QgsVectorLayer(uri.uri(False), self.name, "postgres")
@@ -169,7 +180,7 @@ class SoGroup:
         :param insertion_point: The insertion point in the layer tree (group + position)
         :param load_options: the configuration to load layers
         """
-        if not loading_options.load_as_postgres \
+        if loading_options.loading_mode != LoadingMode.PG \
                 and self.layer.wms_datasource is not None \
                 and (not loading_options.wms_load_separate or self.type == FACADE_LAYER):
             self.layer.load(insertion_point, loading_options)

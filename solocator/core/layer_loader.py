@@ -24,7 +24,6 @@ from solocator.core.layer import SoLayer, SoGroup, LoadingOptions
 from solocator.core.data_products import LAYER_GROUP, FACADE_LAYER
 from solocator.core.utils import dbg_info
 from solocator.core.settings import Settings
-from solocator.gui.layer_loader_dialog import LayerLoaderDialog
 
 DEFAULT_CRS = 'EPSG:2056'
 
@@ -61,19 +60,16 @@ class LayerLoader:
 
         data = self.reformat_data(data)
 
-        if open_dialog:
-            dlg = LayerLoaderDialog(data)
-            if dlg.exec_():
-                data = dlg.first_selected_item()
-                loading_options = dlg.loading_options()
-            else:
-                data = None
-        else:
-            settings = Settings()
-            loading_options = LoadingOptions(settings.value('wms_load_separate'), settings.value('wms_image_format'))
+        settings = Settings()
+        loading_options = LoadingOptions(
+            wms_load_separate=settings.value('wms_load_separate'),
+            wms_image_format=settings.value('wms_image_format'),
+            loading_mode=settings.value('default_layer_loading_mode'),
+            pg_auth_id=settings.value('pg_auth_id'),
+            pg_service=settings.value('pg_service')
+        )
 
-        if data:
-            data.load(insertion_point, loading_options)
+        data.load(insertion_point, loading_options)
 
     def reformat_data(self, data: dict):
         """
