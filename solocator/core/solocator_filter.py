@@ -428,15 +428,15 @@ class SoLocatorFilter(QgsLocatorFilter):
         geometry.transform(self.transform_ch)
         self.highlight(geometry)
 
-    def fetch_data_product(self, product: DataProductResult, open_dialog: bool):
+    def fetch_data_product(self, product: DataProductResult, alternate_mode: bool):
         dbg_info(product)
         url = '{url}/{dataproduct_id}'.format(url=DATA_PRODUCT_URL, dataproduct_id=product.dataproduct_id)
         self.nam_fetch_feature = NetworkAccessManager()
         dbg_info(url)
-        self.nam_fetch_feature.finished.connect(lambda response: self.parse_data_product_response(response, open_dialog))
+        self.nam_fetch_feature.finished.connect(lambda response: self.parse_data_product_response(response, alternate_mode))
         self.nam_fetch_feature.request(url, headers=self.HEADERS, blocking=False)
 
-    def parse_data_product_response(self, response, open_dialog: bool):
+    def parse_data_product_response(self, response, alternate_mode: bool):
         if response.status_code != 200:
             if not isinstance(response.exception, RequestsExceptionUserAbort):
                 info("Error in feature response with status code: "
@@ -444,7 +444,7 @@ class SoLocatorFilter(QgsLocatorFilter):
             return
 
         data = json.loads(response.content.decode('utf-8'))
-        LayerLoader(data, open_dialog, self.iface)
+        LayerLoader(data, self.iface, alternate_mode)
 
 
 

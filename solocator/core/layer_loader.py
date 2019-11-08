@@ -20,7 +20,7 @@
 
 from qgis.gui import QgisInterface
 
-from solocator.core.layer import SoLayer, SoGroup, LoadingOptions
+from solocator.core.layer import SoLayer, SoGroup, LoadingOptions, LoadingMode
 from solocator.core.data_products import LAYER_GROUP, FACADE_LAYER
 from solocator.core.utils import dbg_info
 from solocator.core.settings import Settings
@@ -37,7 +37,7 @@ except ModuleNotFoundError:
 
 
 class LayerLoader:
-    def __init__(self, data: dict, open_dialog: bool, iface: QgisInterface):
+    def __init__(self, data: dict, iface: QgisInterface, alternate_mode: bool = False):
 
         try:
             insertion_point = iface.layerTreeInsertionPoint()
@@ -61,10 +61,13 @@ class LayerLoader:
         data = self.reformat_data(data)
 
         settings = Settings()
+        loading_mode: LoadingMode = settings.value('default_layer_loading_mode')
+        if alternate_mode:
+            loading_mode = loading_mode.alternate_mode()
         loading_options = LoadingOptions(
             wms_load_separate=settings.value('wms_load_separate'),
             wms_image_format=settings.value('wms_image_format'),
-            loading_mode=settings.value('default_layer_loading_mode'),
+            loading_mode=loading_mode,
             pg_auth_id=settings.value('pg_auth_id'),
             pg_service=settings.value('pg_service')
         )

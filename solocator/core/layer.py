@@ -50,6 +50,14 @@ class LoadingMode(Enum):
         else:
             return self.name
 
+    def alternate_mode(self):
+        if self.value == LoadingMode.PG.value:
+            return LoadingMode.WMS
+        elif self.value == LoadingMode.WMS.value:
+            return LoadingMode.PG
+        else:
+            raise NameError('incomplete handling of enum values')
+
 
 def postgis_datasource_to_uri(postgis_datasource: dict, pg_auth_id: str, pg_service: str) -> QgsDataSourceUri:
     uri = QgsDataSourceUri()
