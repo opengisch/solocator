@@ -50,7 +50,7 @@ PG_HOST = Settings().value('pg_host') or 'geodb.rootso.org'
 PG_DB = 'pub'
 PG_PORT = '5432'
 
-BASE_URL = Settings().value('service_url') or 'https://geo.so.ch/api'
+BASE_URL = Settings().value('service_url') or 'https://geo-i.so.ch/api'
 SEARCH_URL = '{}/search/v2'.format(BASE_URL)  # see https://geo-t.so.ch/api/search/v2/api/
 FEATURE_URL = '{}/data/v1'.format(BASE_URL)  # see https://geo-t.so.ch/api/data/v1/api/
 DATA_PRODUCT_URL = '{}/dataproduct/v1'.format(BASE_URL)  # see https://geo-t.so.ch/api/dataproduct/v1/api/

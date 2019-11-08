@@ -53,11 +53,12 @@ class FeatureResult:
 
 
 class DataProductResult:
-    def __init__(self, type, dataproduct_id, display, dset_info, sublayers):
+    def __init__(self, type, dataproduct_id, display, dset_info, stacktype, sublayers):
         self.type = type
         self.dataproduct_id = dataproduct_id
         self.display = display
         self.dset_info = dset_info
+        self.stacktype = stacktype
         self.sublayers = sublayers
 
     def __repr__(self):
@@ -182,7 +183,6 @@ class SoLocatorFilter(QgsLocatorFilter):
                 'searchtext': str(search),
                 'filter': self.enabled_dataproducts(),
                 'limit': str(self.settings.value('results_limit'))
-
             }
 
             nam = NetworkAccessManager()
@@ -211,16 +211,20 @@ class SoLocatorFilter(QgsLocatorFilter):
             info('{} {} {}'.format(exc_type, filename, exc_traceback.tb_lineno), Qgis.Critical)
             info(traceback.print_exception(exc_type, exc_obj, exc_traceback), Qgis.Critical)
 
-    def data_product_qgsresult(self, data: dict, sub_layer: bool, score: float) -> QgsLocatorResult:
+    def data_product_qgsresult(self, data: dict, sub_layer: bool, score: float, stacktype) -> QgsLocatorResult:
         result = QgsLocatorResult()
         result.filter = self
         result.displayString = '{prefix}{title}'.format(prefix=' ↳ ' if sub_layer else '', title=data['display'])
-        result.group = 'Karten'
+        if stacktype == 'background':
+            result.group = 'Karten (Hintergrundkarten)'
+        else:
+            result.group = 'Karten (Vordergrundkarten)'
         result.userData = DataProductResult(
             type=data['type'],
             dataproduct_id=data['dataproduct_id'],
             display=data['display'],
             dset_info=data['dset_info'],
+            stacktype=stacktype,
             sublayers=data.get('sublayers', None)
         )
         data_product = 'dataproduct'
@@ -287,14 +291,14 @@ class SoLocatorFilter(QgsLocatorFilter):
                 elif 'dataproduct' in res.keys():
                     dp = res['dataproduct']
                     # dbg_info("data_product: {}".format(dp))
-                    result = self.data_product_qgsresult(dp, False, score)
+                    result = self.data_product_qgsresult(dp, False, score, dp['stacktype'])
                     self.resultFetched.emit(result)
                     score -= 0.001
 
                     # also give sublayers for which text matches
                     for layer in dp.get('sublayers', []):
                         if search_text.lower() in layer['display'].lower():
-                            result = self.data_product_qgsresult(layer, True, score)
+                            result = self.data_product_qgsresult(layer, True, score, dp['stacktype'])
                             self.resultFetched.emit(result)
                             score -= 0.001
 
