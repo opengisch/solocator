@@ -24,8 +24,8 @@ from qgis.PyQt.uic import loadUiType
 
 from solocator.core.data_products import DATA_PRODUCTS
 from solocator.qgis_setting_manager import SettingDialog, UpdateMode
-from solocator.qgis_setting_manager.widgets import TableWidgetStringListWidget, ComboStringWidget
-from solocator.core.settings import Settings
+from solocator.qgis_setting_manager.widgets import TableWidgetStringListWidget
+from solocator.core.settings import Settings, DEFAULT_PG_HOST, DEFAULT_BASE_URL
 
 DialogUi, _ = loadUiType(os.path.join(os.path.dirname(__file__), '../ui/config.ui'))
 
@@ -70,6 +70,8 @@ class ConfigDialog(QDialog, DialogUi, SettingDialog):
         self.setting_widget('wms_image_format').auto_populate()
         self.setting_widget('default_layer_loading_mode').auto_populate()
 
+        self.pg_host.setPlaceholderText(DEFAULT_PG_HOST)
+        self.service_url.setPlaceholderText(DEFAULT_BASE_URL)
 
     def select_all(self, select: bool = True):
         for r in range(self.skipped_dataproducts.rowCount()):
