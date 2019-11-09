@@ -72,6 +72,8 @@ class ConfigDialog(QDialog, DialogUi, SettingDialog):
 
         self.pg_host.setPlaceholderText(DEFAULT_PG_HOST)
         self.service_url.setPlaceholderText(DEFAULT_BASE_URL)
+        self.pg_host.setShowClearButton(True)
+        self.service_url.setShowClearButton(True)
 
     def select_all(self, select: bool = True):
         for r in range(self.skipped_dataproducts.rowCount()):

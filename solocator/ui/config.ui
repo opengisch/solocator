@@ -278,10 +278,10 @@
         </widget>
        </item>
        <item row="1" column="1">
-        <widget class="QLineEdit" name="service_url"/>
+        <widget class="QgsFilterLineEdit" name="service_url"/>
        </item>
        <item row="3" column="1">
-        <widget class="QLineEdit" name="pg_host"/>
+        <widget class="QgsFilterLineEdit" name="pg_host"/>
        </item>
        <item row="2" column="0">
         <widget class="QLabel" name="label_2">
@@ -298,7 +298,7 @@
         </widget>
        </item>
        <item row="2" column="1">
-        <widget class="QLineEdit" name="pg_service"/>
+        <widget class="QgsFilterLineEdit" name="pg_service"/>
        </item>
        <item row="4" column="1">
         <spacer name="verticalSpacer_3">
