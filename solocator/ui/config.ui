@@ -21,7 +21,7 @@
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
-       <string>Searching</string>
+       <string>Suche</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_2">
        <item row="0" column="0">
@@ -125,13 +125,13 @@
      </widget>
      <widget class="QWidget" name="tab_2">
       <attribute name="title">
-       <string>Loading layers</string>
+       <string>Layer laden</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_5">
        <item row="0" column="0">
         <widget class="QLabel" name="label">
          <property name="text">
-          <string>Preferred connection mode</string>
+          <string>Bevorzugter Verbindungsmodus</string>
          </property>
         </widget>
        </item>
@@ -223,7 +223,7 @@
      </widget>
      <widget class="QWidget" name="tab_3">
       <attribute name="title">
-       <string>Displaying results</string>
+       <string>Resultate Anzeigen</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_6">
        <item row="0" column="0">
@@ -260,7 +260,7 @@
      </widget>
      <widget class="QWidget" name="tab_4">
       <attribute name="title">
-       <string>Testing</string>
+       <string>Testen</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_8">
        <item row="1" column="0">
@@ -273,7 +273,7 @@
        <item row="3" column="0">
         <widget class="QLabel" name="label_5">
          <property name="text">
-          <string>PG Hosh</string>
+          <string>PG Host</string>
          </property>
         </widget>
        </item>
@@ -293,7 +293,7 @@
        <item row="0" column="0" colspan="2">
         <widget class="QLabel" name="label_8">
          <property name="text">
-          <string>Keep these settings empty for normal usage</string>
+          <string>Diese Einstellungen sollten im Normalbetrieb leer gelassen werden</string>
          </property>
         </widget>
        </item>
