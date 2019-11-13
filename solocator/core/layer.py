@@ -68,6 +68,7 @@ def postgis_datasource_to_uri(postgis_datasource: dict, pg_auth_id: str, pg_serv
     [schema, table_name] = postgis_datasource['data_set_name'].split('.')
     uri.setDataSource(schema, table_name, postgis_datasource['geometry_field'])
     uri.setKeyColumn(postgis_datasource['primary_key'])
+    wkb_type = None
     if postgis_datasource['geometry_type'] == 'POINT':
         wkb_type = QgsWkbTypes.Point
     elif postgis_datasource['geometry_type'] == 'MULITPOINT':
@@ -84,7 +85,8 @@ def postgis_datasource_to_uri(postgis_datasource: dict, pg_auth_id: str, pg_serv
         info('SoLocator unterstützt den Geometrietyp {geometry_type} nicht. Bitte kontaktieren Sie den Support.'.format(
             geometry_type=postgis_datasource['geometry_type']), Qgis.Warning
         )
-    uri.setWkbType(wkb_type)
+    if wkb_type:
+        uri.setWkbType(wkb_type)
     uri.setSrid(str(postgis_datasource.get('srid', 2056)))
     return uri
 

@@ -35,7 +35,7 @@ from solocator.core.network_access_manager import NetworkAccessManager, Requests
 from solocator.core.settings import Settings, BASE_URL, SEARCH_URL, FEATURE_URL, DATA_PRODUCT_URL
 from solocator.core.layer_loader import LayerLoader
 from solocator.core.data_products import DATA_PRODUCTS, dataproduct2icon_description
-from solocator.core.utils import dbg_info, info
+from solocator.core.utils import DEBUG
 from solocator.gui.config_dialog import ConfigDialog
 
 import solocator.resources_rc  # NOQA
@@ -172,7 +172,7 @@ class SoLocatorFilter(QgsLocatorFilter):
 
     def fetchResults(self, search: str, context: QgsLocatorContext, feedback: QgsFeedback):
         try:
-            dbg_info("start solocator search...")
+            self.dbg_info("start solocator search...")
 
             if len(search) < 3:
                 return
@@ -188,14 +188,14 @@ class SoLocatorFilter(QgsLocatorFilter):
             nam = NetworkAccessManager()
             feedback.canceled.connect(nam.abort)
             url = self.url_with_param(SEARCH_URL, params)
-            dbg_info(url)
+            self.dbg_info(url)
             try:
                 (response, content) = nam.request(url, headers=self.HEADERS, blocking=True)
                 self.handle_response(response, search)
             except RequestsExceptionUserAbort:
                 pass
             except RequestsException as err:
-                info(err, Qgis.Info)
+                self.info(err, Qgis.Info)
 
             if not self.result_found:
                 result = QgsLocatorResult()
@@ -205,11 +205,11 @@ class SoLocatorFilter(QgsLocatorFilter):
                 self.resultFetched.emit(result)
 
         except Exception as e:
-            info(e, Qgis.Critical)
+            self.info(e, Qgis.Critical)
             exc_type, exc_obj, exc_traceback = sys.exc_info()
             filename = os.path.split(exc_traceback.tb_frame.f_code.co_filename)[1]
-            info('{} {} {}'.format(exc_type, filename, exc_traceback.tb_lineno), Qgis.Critical)
-            info(traceback.print_exception(exc_type, exc_obj, exc_traceback), Qgis.Critical)
+            self.info('{} {} {}'.format(exc_type, filename, exc_traceback.tb_lineno), Qgis.Critical)
+            self.info(traceback.print_exception(exc_type, exc_obj, exc_traceback), Qgis.Critical)
 
     def data_product_qgsresult(self, data: dict, sub_layer: bool, score: float, stacktype) -> QgsLocatorResult:
         result = QgsLocatorResult()
@@ -237,8 +237,8 @@ class SoLocatorFilter(QgsLocatorFilter):
         try:
             if response.status_code != 200:
                 if not isinstance(response.exception, RequestsExceptionUserAbort):
-                    info("Error in main response with status code: "
-                         "{} from {}".format(response.status_code, response.url))
+                    self.info("Error in main response with status code: "
+                              "{} from {}".format(response.status_code, response.url))
                 return
 
             data = json.loads(response.content.decode('utf-8'))
@@ -257,7 +257,7 @@ class SoLocatorFilter(QgsLocatorFilter):
                     result.displayString = _filter['filterword']
                     if _filter['count']:
                         result.displayString += ' ({})'.format(_filter['count'])
-                    dbg_info(_filter)
+                    self.dbg_info(_filter)
                     result.icon, _ = dataproduct2icon_description(_filter['dataproduct_id'], 'datasetview')
                     result.userData = FilterResult(_filter['filterword'], search_text)
                     result.score = score
@@ -290,7 +290,7 @@ class SoLocatorFilter(QgsLocatorFilter):
 
                 elif 'dataproduct' in res.keys():
                     dp = res['dataproduct']
-                    # dbg_info("data_product: {}".format(dp))
+                    # self.dbg_info("data_product: {}".format(dp))
                     result = self.data_product_qgsresult(dp, False, score, dp['stacktype'])
                     self.resultFetched.emit(result)
                     score -= 0.001
@@ -308,18 +308,18 @@ class SoLocatorFilter(QgsLocatorFilter):
                 self.result_found = True
 
         except Exception as e:
-            info(str(e), Qgis.Critical)
+            self.info(str(e), Qgis.Critical)
             exc_type, exc_obj, exc_traceback = sys.exc_info()
             filename = os.path.split(exc_traceback.tb_frame.f_code.co_filename)[1]
-            info('{} {} {}'.format(exc_type, filename, exc_traceback.tb_lineno), Qgis.Critical)
-            info(traceback.print_exception(exc_type, exc_obj, exc_traceback), Qgis.Critical)
+            self.info('{} {} {}'.format(exc_type, filename, exc_traceback.tb_lineno), Qgis.Critical)
+            self.info(traceback.print_exception(exc_type, exc_obj, exc_traceback), Qgis.Critical)
 
     def triggerResult(self, result: QgsLocatorResult):
         # this is run in the main thread, i.e. map_canvas is not None
         self.clearPreviousResults()
 
         ctrl_clicked = Qt.ControlModifier == QApplication.instance().queryKeyboardModifiers()
-        dbg_info(("CTRL pressed: {}".format(ctrl_clicked)))
+        self.dbg_info(("CTRL pressed: {}".format(ctrl_clicked)))
 
         if type(result.userData) == NoResult:
             pass
@@ -330,7 +330,7 @@ class SoLocatorFilter(QgsLocatorFilter):
         elif type(result.userData) == DataProductResult:
             self.fetch_data_product(result.userData, ctrl_clicked)
         else:
-            info('Incorrect result. Please contact support', Qgis.Critical)
+            self.info('Incorrect result. Please contact support', Qgis.Critical)
 
     def filtered_search(self, filter_result: FilterResult):
         search_text = '{prefix} {filter_word}: {search}'.format(
@@ -371,28 +371,28 @@ class SoLocatorFilter(QgsLocatorFilter):
         self.current_timer.start(5000)
 
     def fetch_feature(self, feature: FeatureResult):
-        dbg_info(feature)
+        self.dbg_info(feature)
         url = '{url}/{dataset}/{id}'.format(
             url=FEATURE_URL, dataset=feature.dataproduct_id, id=feature.feature_id
         )
         self.nam_fetch_feature = NetworkAccessManager()
-        dbg_info(url)
+        self.dbg_info(url)
         self.nam_fetch_feature.finished.connect(self.parse_feature_response)
         self.nam_fetch_feature.request(url, headers=self.HEADERS, blocking=False)
 
     def parse_feature_response(self, response):
         if response.status_code != 200:
             if not isinstance(response.exception, RequestsExceptionUserAbort):
-                info("Error in feature response with status code: "
-                     "{} from {}".format(response.status_code, response.url))
+                self.info("Error in feature response with status code: "
+                          "{} from {}".format(response.status_code, response.url))
             return
 
         data = json.loads(response.content.decode('utf-8'))
-        dbg_info(data.keys())
-        dbg_info(data['properties'])
-        dbg_info(data['geometry'])
-        dbg_info(data['crs'])
-        dbg_info(data['type'])
+        self.dbg_info(data.keys())
+        self.dbg_info(data['properties'])
+        self.dbg_info(data['geometry'])
+        self.dbg_info(data['crs'])
+        self.dbg_info(data['type'])
 
         assert data['crs']['properties']['name'] == 'urn:ogc:def:crs:EPSG::2056'
 
@@ -421,29 +421,38 @@ class SoLocatorFilter(QgsLocatorFilter):
 
         else:
             # SoLocator does not handle {geometry_type} yet. Please contact support
-            info('SoLocator unterstützt den Geometrietyp {geometry_type} nicht.'
-                 ' Bitte kontaktieren Sie den Support.'.format(geometry_type=geometry_type), Qgis.Warning)
+            self.info('SoLocator unterstützt den Geometrietyp {geometry_type} nicht.'
+                      ' Bitte kontaktieren Sie den Support.'.format(geometry_type=geometry_type), Qgis.Warning)
 
         geometry.transform(self.transform_ch)
         self.highlight(geometry)
 
     def fetch_data_product(self, product: DataProductResult, alternate_mode: bool):
-        dbg_info(product)
+        self.dbg_info(product)
         url = '{url}/{dataproduct_id}'.format(url=DATA_PRODUCT_URL, dataproduct_id=product.dataproduct_id)
         self.nam_fetch_feature = NetworkAccessManager()
-        dbg_info(url)
-        self.nam_fetch_feature.finished.connect(lambda response: self.parse_data_product_response(response, alternate_mode))
+        self.dbg_info(url)
+        is_background = product.stacktype == 'background'
+        self.dbg_info('is_background {}'.format(is_background))
+        self.nam_fetch_feature.finished.connect(lambda response: self.parse_data_product_response(response, is_background, alternate_mode))
         self.nam_fetch_feature.request(url, headers=self.HEADERS, blocking=False)
 
-    def parse_data_product_response(self, response, alternate_mode: bool):
+    def parse_data_product_response(self, response, is_background: bool, alternate_mode: bool):
         if response.status_code != 200:
             if not isinstance(response.exception, RequestsExceptionUserAbort):
-                info("Error in feature response with status code: "
-                     "{} from {}".format(response.status_code, response.url))
+                self.info("Error in feature response with status code: "
+                          "{} from {}".format(response.status_code, response.url))
             return
 
         data = json.loads(response.content.decode('utf-8'))
-        LayerLoader(data, self.iface, alternate_mode)
+        LayerLoader(data, self.iface, is_background, alternate_mode)
+
+    def info(self, msg="", level=Qgis.Info):
+        self.logMessage(str(msg), level)
+
+    def dbg_info(self, msg=""):
+        if DEBUG:
+            self.info(msg)
 
 
 

@@ -17,7 +17,7 @@
  ***************************************************************************/
 """
 
-
+from qgis.core import QgsLayerTreeRegistryBridge
 from qgis.gui import QgisInterface
 
 from solocator.core.layer import SoLayer, SoGroup, LoadingOptions, LoadingMode
@@ -29,7 +29,7 @@ DEFAULT_CRS = 'EPSG:2056'
 
 
 # Compatibility for QGIS < 3.10
-# TODO: remove
+# TODO: remove exception
 try:
     from qgis.gui.QgsLayerTreeRegistryBridge import InsertionPoint
 except ModuleNotFoundError:
@@ -37,15 +37,7 @@ except ModuleNotFoundError:
 
 
 class LayerLoader:
-    def __init__(self, data: dict, iface: QgisInterface, alternate_mode: bool = False):
-
-        try:
-            insertion_point = iface.layerTreeInsertionPoint()
-        except AttributeError:
-            # backward compatibility for QGIS < 3.10
-            # TODO: remove
-            insertion_point = layerTreeInsertionPoint(iface.layerTreeView())
-        dbg_info("insertion point: {} {}".format(insertion_point.group.name(), insertion_point.position))
+    def __init__(self, data: dict, iface: QgisInterface, is_background: bool, alternate_mode: bool = False):
 
         # debug
         for i, v in data.items():
@@ -64,6 +56,23 @@ class LayerLoader:
         loading_mode: LoadingMode = settings.value('default_layer_loading_mode')
         if alternate_mode:
             loading_mode = loading_mode.alternate_mode()
+
+        if is_background:
+            loading_mode = LoadingMode.WMS
+            root = iface.layerTreeView().model().rootGroup()
+            pos = len(root.children())
+            insertion_point = InsertionPoint(root, pos)
+
+        else:
+            try:
+                insertion_point = iface.layerTreeInsertionPoint()
+            except AttributeError:
+                # backward compatibility for QGIS < 3.10
+                # TODO: remove
+                insertion_point = layerTreeInsertionPoint(iface.layerTreeView())
+
+        dbg_info("insertion point: {} {}".format(insertion_point.group.name(), insertion_point.position))
+
         loading_options = LoadingOptions(
             wms_load_separate=settings.value('wms_load_separate'),
             wms_image_format=settings.value('wms_image_format'),
