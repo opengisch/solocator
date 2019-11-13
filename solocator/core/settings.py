@@ -30,7 +30,7 @@ class Settings(SettingManager):
         self.add_setting(Integer('results_limit', Scope.Global, 20))
         self.add_setting(Bool('keep_scale', Scope.Global, False))
         self.add_setting(Double('point_scale', Scope.Global, 1000))
-        self.add_setting(Enum('default_layer_loading_mode', Scope.Global, layer.LoadingMode.WMS, enum_type=EnumType.Python))
+        self.add_setting(Enum('default_layer_loading_mode', Scope.Global, layer.LoadingMode.PG, enum_type=EnumType.Python))
 
         self.add_setting(Bool('wms_load_separate', Scope.Global, True))
         self.add_setting(String('wms_image_format', Scope.Global, 'png', allowed_values=('png', 'jpeg')))
