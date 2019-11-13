@@ -3,7 +3,7 @@
 /***************************************************************************
 
  QGIS Solothurn Locator Plugin
- Copyright (C) 2019 Denis Rouzaud, OPENGIS.ch
+ Copyright (C) 2019 Denis Rouzaud
 
  ***************************************************************************/
 
@@ -19,23 +19,15 @@
 
 from qgis.core import Qgis, QgsMessageLog
 from qgis.utils import iface
-from PyQt5.QtCore import Qt, Q_ARG
 
 DEBUG = True
 
 
 def info(message: str, level: Qgis.MessageLevel = Qgis.Info):
-    QgsMessageLog.logMessage("{}: {}".format(
-        'SoLocator', message), "Locator bar", level)
-    meta = iface.messageBar().metaObject()
-    if level == Qgis.Warning:
-        meta.invokeMethod(iface.messageBar(), 'pushWarning', Qt.QueuedConnection, Q_ARG("QString", 'SoLocator'), Q_ARG("QString", message))
-    elif level == Qgis.Critical:
-        meta.invokeMethod(iface.messageBar(), 'pushCritical', Qt.QueuedConnection, Q_ARG("QString", 'SoLocator'), Q_ARG("QString", message))
-    else:
-        meta.invokeMethod(iface.messageBar(), 'pushInfo', Qt.QueuedConnection, Q_ARG("QString", 'SoLocator'), Q_ARG("QString", message))
+    QgsMessageLog.logMessage("{}: {}".format('SoLocator', message), "Locator bar", level)
+    iface.messageBar().pushMessage('SoLocator', message, level)
+
 
 def dbg_info(message: str):
     if DEBUG:
-        QgsMessageLog.logMessage("{}: {}".format(
-            'SoLocator', message), "Locator bar", Qgis.Info)
+        QgsMessageLog.logMessage("{}: {}".format('SoLocator', message), "Locator bar", Qgis.Info)
