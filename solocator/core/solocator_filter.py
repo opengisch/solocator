@@ -295,9 +295,10 @@ class SoLocatorFilter(QgsLocatorFilter):
                     self.resultFetched.emit(result)
                     score -= 0.001
 
-                    # also give sublayers for which text matches
+                    # also give sublayers
                     for layer in dp.get('sublayers', []):
-                        if search_text.lower() in layer['display'].lower():
+                        always_show_sublayers = True
+                        if always_show_sublayers or search_text.lower() in layer['display'].lower():
                             result = self.data_product_qgsresult(layer, True, score, dp['stacktype'])
                             self.resultFetched.emit(result)
                             score -= 0.001
