@@ -19,14 +19,15 @@
 
 from copy import deepcopy
 from tempfile import NamedTemporaryFile
-from enum import Enum
 
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QTreeWidgetItem
 
 from qgis.core import Qgis, QgsVectorLayer, QgsRasterLayer, QgsProject, QgsDataSourceUri, QgsWkbTypes
 
-import solocator.core.settings as settings
+from solocator.core.loading_mode import LoadingMode
+from solocator.core.loading_options import LoadingOptions
+from solocator.core.settings import PG_HOST, PG_PORT, PG_DB
 from solocator.core.data_products import FACADE_LAYER
 from solocator.core.utils import info
 
@@ -38,31 +39,10 @@ except ModuleNotFoundError:
     from .qgs_layer_tree_insertion_point import InsertionPoint, layerTreeInsertionPoint
 
 
-class LoadingMode(Enum):
-    PG = 1
-    WMS = 2
-
-    def __str__(self):
-        if self.value == LoadingMode.PG.value:
-            return 'PostgreSQL'
-        elif self.value == LoadingMode.WMS.value:
-            return 'WMS'
-        else:
-            return self.name
-
-    def alternate_mode(self):
-        if self.value == LoadingMode.PG.value:
-            return LoadingMode.WMS
-        elif self.value == LoadingMode.WMS.value:
-            return LoadingMode.PG
-        else:
-            raise NameError('incomplete handling of enum values')
-
-
 def postgis_datasource_to_uri(postgis_datasource: dict, pg_auth_id: str, pg_service: str) -> QgsDataSourceUri:
     uri = QgsDataSourceUri()
     if not pg_service:
-        uri.setConnection(settings.PG_HOST, settings.PG_PORT, settings.PG_DB, None, None, QgsDataSourceUri.SslPrefer, pg_auth_id)
+        uri.setConnection(PG_HOST, PG_PORT, PG_DB, None, None, QgsDataSourceUri.SslPrefer, pg_auth_id)
     else:
         uri.setConnection(pg_service, None, None, None, QgsDataSourceUri.SslPrefer, pg_auth_id)
     [schema, table_name] = postgis_datasource['data_set_name'].split('.')
@@ -103,26 +83,6 @@ def wms_datasource_to_url(wms_datasource: dict, crs: str, image_format: str) -> 
         crs=crs, image_format=image_format, layer=wms_datasource['name'], url=wms_datasource['service_url']
     )
     return url
-
-
-class LoadingOptions:
-    """
-    A class to hold the loading options
-    """
-    def __init__(self, wms_load_separate: bool, wms_image_format: str,
-                 loading_mode: LoadingMode, pg_auth_id: str = None, pg_service: str = None):
-        """
-        :param wms_load_separate: If True, individual layers will be loaded as separate instead of a single one
-        :param wms_image_format: image format
-        :param loading_mode: the LoadingMode (WMS or PostgreSQL)
-        :param pg_auth_id: the configuration ID for the authentification
-        :param pg_service: the PG service nate
-        """
-        self.loading_mode = loading_mode
-        self.wms_load_separate = wms_load_separate
-        self.pg_auth_id = pg_auth_id
-        self.pg_service = pg_service
-        self.wms_image_format = wms_image_format
 
 
 class SoLayer:

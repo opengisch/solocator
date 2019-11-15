@@ -20,7 +20,9 @@
 from qgis.core import QgsLayerTreeRegistryBridge
 from qgis.gui import QgisInterface
 
-from solocator.core.layer import SoLayer, SoGroup, LoadingOptions, LoadingMode
+from solocator.core.layer import SoLayer, SoGroup
+from solocator.core.loading_options import LoadingOptions
+from solocator.core.loading_mode import LoadingMode
 from solocator.core.data_products import LAYER_GROUP, FACADE_LAYER
 from solocator.core.utils import dbg_info
 from solocator.core.settings import Settings
