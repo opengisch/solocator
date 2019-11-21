@@ -6,7 +6,8 @@ Integration in die QGIS Suche für dieGeodateninfrastruktur im Kanton Solothurn.
 
 ### Install
 
-https://github.com/opengisch/solocator/releases/latest/download/plugins.xml
+Releases: https://plugins.qgis.org/plugins/solocator/
+Experimental: https://github.com/opengisch/solocator/releases/latest/download/plugins.xml
 
 ### Advanced settings for testing purpose
 
