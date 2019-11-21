@@ -21,7 +21,7 @@ from copy import deepcopy
 from tempfile import NamedTemporaryFile
 
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtWidgets import QTreeWidgetItem
+from qgis.PyQt.QtWidgets import QApplication, QTreeWidgetItem
 
 from qgis.core import Qgis, QgsVectorLayer, QgsRasterLayer, QgsProject, QgsDataSourceUri, QgsWkbTypes
 
@@ -153,6 +153,7 @@ class SoGroup:
         :param insertion_point: The insertion point in the layer tree (group + position)
         :param load_options: the configuration to load layers
         """
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         if loading_options.loading_mode != LoadingMode.PG \
                 and self.layer.wms_datasource is not None \
                 and (not loading_options.wms_load_separate or self.type == FACADE_LAYER):
@@ -165,6 +166,7 @@ class SoGroup:
 
             for i, child in enumerate(self.children):
                 child.load(InsertionPoint(group, i), loading_options)
+        QApplication.restoreOverrideCursor()
 
     def tree_widget_item(self):
         item = QTreeWidgetItem([self.name])
