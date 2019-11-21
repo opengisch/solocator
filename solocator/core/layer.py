@@ -28,7 +28,7 @@ from qgis.core import Qgis, QgsVectorLayer, QgsRasterLayer, QgsProject, QgsDataS
 from solocator.core.loading_mode import LoadingMode
 from solocator.core.loading_options import LoadingOptions
 from solocator.core.settings import PG_HOST, PG_PORT, PG_DB
-from solocator.core.data_products import FACADE_LAYER
+from solocator.core.data_products import FACADE_LAYER, image_format_force_jpeg
 from solocator.core.utils import info
 
 # Compatibility for QGIS < 3.10
@@ -86,9 +86,10 @@ def wms_datasource_to_url(wms_datasource: dict, crs: str, image_format: str) -> 
 
 
 class SoLayer:
-    def __init__(self, name: str, crs: str, wms_datasource: dict, postgis_datasource: dict, description: str,
+    def __init__(self, name: str, is_background: bool, crs: str, wms_datasource: dict, postgis_datasource: dict, description: str,
                  qml: str = None):
         self.name = name
+        self.is_background = is_background
         self.crs = crs
         self.description = description
         # fix for wms_datasource
@@ -118,7 +119,11 @@ class SoLayer:
                             info('SoLocator could not load QML style for layer {}. {} URI:{}'.format(self.name, msg, uri),
                                  Qgis.Warning)
         if layer is None:
-            url = wms_datasource_to_url(self.wms_datasource, self.crs, loading_options.wms_image_format)
+            if image_format_force_jpeg(self.name, self.is_background):
+                img_format = 'jpeg'
+            else:
+                img_format = loading_options.wms_image_format
+            url = wms_datasource_to_url(self.wms_datasource, self.crs, img_format)
             layer = QgsRasterLayer(url, self.name, 'wms')
         QgsProject.instance().addMapLayer(layer, False)
         if not layer.isValid():
@@ -138,7 +143,7 @@ class SoLayer:
 
 
 class SoGroup:
-    def __init__(self, name, children, layer: SoLayer, _type: str):
+    def __init__(self, name: str, children, layer: SoLayer, _type: str):
         self.name = name
         self.children = children
         self.layer = layer

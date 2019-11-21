@@ -52,7 +52,7 @@ class LayerLoader:
             else:
                 dbg_info('*** {}: {}'.format(i, v))
 
-        data = self.reformat_data(data)
+        data = self.reformat_data(data, is_background)
 
         settings = Settings()
         loading_mode: LoadingMode = settings.value('default_layer_loading_mode')
@@ -85,17 +85,19 @@ class LayerLoader:
 
         data.load(insertion_point, loading_options)
 
-    def reformat_data(self, data: dict):
+    def reformat_data(self, data: dict, is_background: bool):
         """
         Recursive construction of the tree
         :param data:
+        :param is_background:
         """
         crs = data.get('crs', DEFAULT_CRS)
         if data['type'] in (LAYER_GROUP, FACADE_LAYER):
-            children = [self.reformat_data(child_data) for child_data in data['sublayers']]
-            group_layer = SoLayer(data['display'], crs, data['wms_datasource'], data.get('postgis_datasource'), data.get('description'), data.get('qml'))
+            children = [self.reformat_data(child_data, is_background) for child_data in data['sublayers']]
+            group_layer = SoLayer(data['display'], is_background, crs, data['wms_datasource'], data.get('postgis_datasource'), data.get('description'), data.get('qml'))
             return SoGroup(data['display'], children, group_layer, data['type'])
         else:
-            return SoLayer(data['display'], crs,
+            dbg_info(data.keys())
+            return SoLayer(data['display'], is_background,  crs,
                            data['wms_datasource'], data.get('postgis_datasource'),
                            data.get('description'), data.get('qml'))

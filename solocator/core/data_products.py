@@ -81,3 +81,10 @@ def dataproduct2icon_description(data_product: str, layer_type: str) -> QIcon:
         icon = QIcon(":/plugins/solocator/icons/results/gelaende_flurname.svg")
 
     return icon, label
+
+
+def image_format_force_jpeg(name: str, is_background: str):
+    if 'orthofoto' in name.lower() or is_background:
+        return True
+    else:
+        return False
