@@ -19,7 +19,7 @@
 
 from PyQt5.QtGui import QIcon
 
-DATA_PRODUCTS = {'foreground': 'Karten & Geodaten',
+DATA_PRODUCTS = {'foreground': 'Karten',
                  'background': 'Hintergrundkarten',
                  'ch.so.agi.gemeindegrenzen': 'Gemeinden',
                  'ch.so.agi.av.gebaeudeadressen.gebaeudeeingaenge': 'Adressen',
