@@ -32,9 +32,10 @@ from qgis.core import Qgis, QgsLocatorFilter, QgsLocatorResult, QgsCoordinateRef
 from qgis.gui import QgsRubberBand, QgisInterface, QgsMapCanvas, QgsFilterLineEdit
 
 from solocator.core.network_access_manager import NetworkAccessManager, RequestsException, RequestsExceptionUserAbort
-from solocator.core.settings import Settings, BASE_URL, SEARCH_URL, FEATURE_URL, DATA_PRODUCT_URL
+from solocator.core.settings import Settings, SEARCH_URL, FEATURE_URL, DATA_PRODUCT_URL
 from solocator.core.layer_loader import LayerLoader
 from solocator.core.data_products import DATA_PRODUCTS, dataproduct2icon_description
+from solocator.core.loading_mode import LoadingMode
 from solocator.core.utils import DEBUG
 from solocator.gui.config_dialog import ConfigDialog
 
@@ -128,7 +129,8 @@ class SoLocatorFilter(QgsLocatorFilter):
         return QgsLocatorFilter.Highest
 
     def displayName(self):
-        return 'SoLocator'
+        loading_mode: LoadingMode = self.settings.value('default_layer_loading_mode')
+        return 'SoLocator (Klick: {normal}, ctrl+Klick: {alt})'.format(normal=loading_mode, alt=loading_mode.alternate_mode())
 
     def prefix(self):
         return 'sol'
