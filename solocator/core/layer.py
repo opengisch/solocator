@@ -127,7 +127,7 @@ class SoLayer:
             layer = QgsRasterLayer(url, self.name, 'wms')
         QgsProject.instance().addMapLayer(layer, False)
         if not layer.isValid():
-            info('Layer {} could not be correctly loaded. Please contact the support.'.format(self.name), Qgis.Warning)
+            info('Layer {} konnte nicht korrekt geladen werden.'.format(self.name), Qgis.Warning)
             return False
         else:
             if insertion_point.position >= 0:
