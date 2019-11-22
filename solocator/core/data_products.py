@@ -41,6 +41,12 @@ FACADE_LAYER = 'facadelayer'
 
 
 def dataproduct2icon_description(data_product: str, layer_type: str) -> QIcon:
+    """
+    Returns an icon for a given data product
+    :param data_product:
+    :param layer_type:
+    :return: The QIcon
+    """
     label = None
     icon = QIcon(":/plugins/solocator/icons/solocator.png")
 
@@ -83,8 +89,32 @@ def dataproduct2icon_description(data_product: str, layer_type: str) -> QIcon:
     return icon, label
 
 
-def image_format_force_jpeg(name: str, is_background: str):
+def image_format_force_jpeg(name: str, is_background: str) -> bool:
+    """
+    Returns True if the WMS layer should use JPEG as image format (discarding the user preference)
+    :param name:
+    :param is_background:
+    """
     if 'orthofoto' in name.lower() or is_background:
         return True
     else:
         return False
+
+
+def force_wms(data: dict, is_background: bool) -> bool:
+    """
+    Determines if the layer should be forced as WMS (discarding the user preference)
+    :param data:
+    :param is_background:
+    :return: True if it should load as WMS
+    """
+    # always load background as WMS
+    if is_background:
+        return True
+    # if a child has no PG info, load as WMS
+    if hasattr(data, 'children'):
+        for child in data.children:
+            if child.postgis_datasource is None:
+                return True
+    return False
+

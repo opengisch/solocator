@@ -23,7 +23,7 @@ from qgis.gui import QgisInterface
 from solocator.core.layer import SoLayer, SoGroup
 from solocator.core.loading_options import LoadingOptions
 from solocator.core.loading_mode import LoadingMode
-from solocator.core.data_products import LAYER_GROUP, FACADE_LAYER
+from solocator.core.data_products import LAYER_GROUP, FACADE_LAYER, force_wms
 from solocator.core.utils import dbg_info
 from solocator.core.settings import Settings, PG_SERVICE
 
@@ -59,8 +59,11 @@ class LayerLoader:
         if alternate_mode:
             loading_mode = loading_mode.alternate_mode()
 
-        if is_background:
+        if force_wms(data, is_background):
             loading_mode = LoadingMode.WMS
+
+        # if background, insert at bottom of layer tree
+        if is_background:
             root = iface.layerTreeView().model().rootGroup()
             pos = len(root.children())
             insertion_point = InsertionPoint(root, pos)
