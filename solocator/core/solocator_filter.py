@@ -129,7 +129,6 @@ class SoLocatorFilter(QgsLocatorFilter):
         return QgsLocatorFilter.Highest
 
     def displayName(self):
-        loading_mode: LoadingMode = self.settings.value('default_layer_loading_mode')
         return 'SoLocator'
 
     def prefix(self):
@@ -218,8 +217,9 @@ class SoLocatorFilter(QgsLocatorFilter):
         result.filter = self
         result.displayString = '{prefix}{title}'.format(prefix=' ↳ ' if sub_layer else '', title=data['display'])
         if stacktype == 'background':
-            result.group = 'Hintergrundkarten (Doppelklick: {normal}, Ctrl-Doppelklick: {alt})'.format(normal=loading_mode, alt=loading_mode.alternate_mode())
+            result.group = 'Hintergrundkarten'
         else:
+            loading_mode: LoadingMode = self.settings.value('default_layer_loading_mode')
             result.group = 'Vordergrundkarten (Doppelklick: {normal}, Ctrl-Doppelklick: {alt})'.format(normal=loading_mode, alt=loading_mode.alternate_mode())
         result.userData = DataProductResult(
             type=data['type'],
