@@ -47,6 +47,9 @@ class Settings(SettingManager):
 
 
 DEFAULT_PG_HOST = 'geodb.rootso.org'
+DEFAULT_PG_SERVICE = 'pub'
+
+PG_SERVICE = Settings().value('pg_service') or DEFAULT_PG_SERVICE
 PG_HOST = Settings().value('pg_host') or DEFAULT_PG_HOST
 PG_DB = 'pub'
 PG_PORT = '5432'

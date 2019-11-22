@@ -25,7 +25,7 @@ from solocator.core.loading_options import LoadingOptions
 from solocator.core.loading_mode import LoadingMode
 from solocator.core.data_products import LAYER_GROUP, FACADE_LAYER
 from solocator.core.utils import dbg_info
-from solocator.core.settings import Settings
+from solocator.core.settings import Settings, PG_SERVICE
 
 DEFAULT_CRS = 'EPSG:2056'
 
@@ -80,7 +80,7 @@ class LayerLoader:
             wms_image_format=settings.value('wms_image_format'),
             loading_mode=loading_mode,
             pg_auth_id=settings.value('pg_auth_id'),
-            pg_service=settings.value('pg_service')
+            pg_service=PG_SERVICE
         )
 
         data.load(insertion_point, loading_options)
