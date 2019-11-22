@@ -112,9 +112,21 @@ def force_wms(data: dict, is_background: bool) -> bool:
     if is_background:
         return True
     # if a child has no PG info, load as WMS
+    return missing_postgis_datasource(data)
+
+
+def missing_postgis_datasource(data: dict):
     if hasattr(data, 'children'):
+        # is a SoGroup
         for child in data.children:
-            if child.postgis_datasource is None:
+            if missing_postgis_datasource(child):
                 return True
-    return False
+        return False
+    else:
+        # must be a SoLayer
+        if data.postgis_datasource is None:
+            return True
+        else:
+            return False
+
 
