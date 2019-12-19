@@ -347,6 +347,7 @@ class SoLocatorFilter(QgsLocatorFilter):
             for w in self.iface.mainWindow().findChildren(QgsFilterLineEdit):
                 if hasattr(w.parent(), 'search') and hasattr(w.parent(), 'invalidateResults'):
                     w.setText(search_text)
+                    w.parent().setFocus(True)
                     return
             raise NameError('Locator not found')
 
