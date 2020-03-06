@@ -110,7 +110,7 @@ class SoLayer:
             uri = postgis_datasource_to_uri(self.postgis_datasource, loading_options.pg_auth_id, loading_options.pg_service)
             if uri:
                 layer = QgsVectorLayer(uri.uri(False), self.name, "postgres")
-                if self.qml:
+                if layer.isValid() and self.qml:
                     with NamedTemporaryFile(mode='w', suffix='.qml', delete=False) as fh:
                         fh.write(self.qml)
                         msg, ok = layer.loadNamedStyle(fh.name)
