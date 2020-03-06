@@ -116,8 +116,11 @@ class SoLayer:
                         msg, ok = layer.loadNamedStyle(fh.name)
                         fh.close()
                         if not ok:
-                            info('SoLocator could not load QML style for layer {}. {} URI:{}'.format(self.name, msg, uri),
-                                 Qgis.Warning)
+                            info(
+                                'SoLocator could not load QML style for layer {ln}. {emsg} URI: {uri}'
+                                .format(ln=self.name, emsg=msg, uri=uri.uri(False)),
+                                Qgis.Warning
+                            )
         if layer is None:
             if image_format_force_jpeg(self.name, self.is_background):
                 img_format = 'jpeg'
