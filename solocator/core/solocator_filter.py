@@ -403,18 +403,18 @@ class SoLocatorFilter(QgsLocatorFilter):
         geometry_type = data['geometry']['type']
         geometry = QgsGeometry()
 
-        if geometry_type == 'Point':
+        if geometry_type.lower() == 'point':
             geometry = QgsGeometry.fromPointXY(QgsPointXY(data['geometry']['coordinates'][0],
                                                           data['geometry']['coordinates'][1]))
 
-        elif geometry_type == 'Polygon':
+        elif geometry_type.lower() == 'polygon':
             rings = data['geometry']['coordinates']
             for r in range(0, len(rings)):
                 for p in range(0, len(rings[r])):
                     rings[r][p] = QgsPointXY(rings[r][p][0], rings[r][p][1])
             geometry = QgsGeometry.fromPolygonXY(rings)
 
-        elif geometry_type == 'MultiPolygon':
+        elif geometry_type.lower() == 'multipolygon':
             islands = data['geometry']['coordinates']
             for i in range(0, len(islands)):
                 for r in range(0, len(islands[i])):

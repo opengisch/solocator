@@ -49,17 +49,17 @@ def postgis_datasource_to_uri(postgis_datasource: dict, pg_auth_id: str, pg_serv
     uri.setDataSource(schema, table_name, postgis_datasource['geometry_field'])
     uri.setKeyColumn(postgis_datasource['primary_key'])
     wkb_type = None
-    if postgis_datasource['geometry_type'] == 'POINT':
+    if postgis_datasource['geometry_type'].upper() == 'POINT':
         wkb_type = QgsWkbTypes.Point
-    elif postgis_datasource['geometry_type'] == 'MULITPOINT':
+    elif postgis_datasource['geometry_type'].upper() == 'MULITPOINT':
         wkb_type = QgsWkbTypes.MultiPoint
-    elif postgis_datasource['geometry_type'] == 'POLYGON':
+    elif postgis_datasource['geometry_type'].upper() == 'POLYGON':
         wkb_type = QgsWkbTypes.Polygon
-    elif postgis_datasource['geometry_type'] == 'MULTIPOLYGON':
+    elif postgis_datasource['geometry_type'].upper() == 'MULTIPOLYGON':
         wkb_type = QgsWkbTypes.MultiPolygon
-    elif postgis_datasource['geometry_type'] == 'LINESTRING':
+    elif postgis_datasource['geometry_type'].upper() == 'LINESTRING':
         wkb_type = QgsWkbTypes.LineString
-    elif postgis_datasource['geometry_type'] == 'MULTILINESTRING':
+    elif postgis_datasource['geometry_type'].upper() == 'MULTILINESTRING':
         wkb_type = QgsWkbTypes.MultiLineString
     else:
         info('SoLocator unterstützt den Geometrietyp {geometry_type} nicht. Bitte kontaktieren Sie den Support.'.format(
