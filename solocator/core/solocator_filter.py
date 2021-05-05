@@ -458,5 +458,9 @@ class SoLocatorFilter(QgsLocatorFilter):
         if DEBUG:
             self.info(msg)
 
-
+    def get_user_data(self, result):
+        if hasattr(result, 'getUserData'):
+            return result.getUserData()
+        else:
+            return result.userData
 
