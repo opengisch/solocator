@@ -24,55 +24,6 @@ from qgis.gui import QgsLayerTreeView
 from solocator.core.utils import dbg_info
 
 
-class InsertionPoint:
-    def __init__(self, group: QgsLayerTreeGroup, position: int):
-        self._group = group
-        self._position = position
-
-    @property
-    def group(self):
-        return self._group
-
-    @property
-    def position(self):
-        return self._position
-
-
-def layerTreeInsertionPoint(tree_view: QgsLayerTreeView) -> tuple:
-    """
-    Direct copy of the code QgisApp::layerTreeInsertionPoint for QGIS < 3.10
-    """
-    insert_group = tree_view.layerTreeModel().rootGroup()
-    current = tree_view.currentIndex()
-    index = 0
-
-    if current.isValid():
-
-        index = current.row()
-
-        current_node = tree_view.currentNode()
-        if current_node:
-
-            # if the insertion point is actually a group, insert new layers into the group
-            if QgsLayerTree.isGroup(current_node):
-
-                # if the group is embedded go to the first non-embedded group, at worst the top level item
-                insert_group = firstGroupWithoutCustomProperty(current_node, "embedded")
-
-                return InsertionPoint(insert_group, 0)
-
-            # otherwise just set the insertion point in front of the current node
-            parent_node = current_node.parent()
-            if QgsLayerTree.isGroup(parent_node):
-
-                # if the group is embedded go to the first non-embedded group, at worst the top level item
-                insert_group = firstGroupWithoutCustomProperty(parent_node, "embedded")
-                if parent_node != insert_group:
-                    index = 0
-
-    return InsertionPoint(insert_group, index)
-
-
 def firstGroupWithoutCustomProperty(group: QgsLayerTreeGroup, _property: str) -> QgsLayerTreeGroup:
     """
     Taken from QgsLayerTreeUtils::firstGroupWithoutCustomProperty

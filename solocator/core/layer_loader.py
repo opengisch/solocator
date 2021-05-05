@@ -30,14 +30,6 @@ from solocator.core.settings import Settings, PG_SERVICE
 DEFAULT_CRS = 'EPSG:2056'
 
 
-# Compatibility for QGIS < 3.10
-# TODO: remove exception
-try:
-    from qgis.gui.QgsLayerTreeRegistryBridge import InsertionPoint
-except ModuleNotFoundError:
-    from .qgs_layer_tree_insertion_point import InsertionPoint, layerTreeInsertionPoint
-
-
 class LayerLoader:
     def __init__(self, data: dict, iface: QgisInterface, is_background: bool, alternate_mode: bool = False):
 
@@ -66,15 +58,10 @@ class LayerLoader:
         if is_background:
             root = iface.layerTreeView().model().rootGroup()
             pos = len(root.children())
-            insertion_point = InsertionPoint(root, pos)
+            insertion_point = QgsLayerTreeRegistryBridge.InsertionPoint(root, pos)
 
         else:
-            try:
-                insertion_point = iface.layerTreeInsertionPoint()
-            except AttributeError:
-                # backward compatibility for QGIS < 3.10
-                # TODO: remove
-                insertion_point = layerTreeInsertionPoint(iface.layerTreeView())
+            insertion_point = iface.layerTreeInsertionPoint()
 
         dbg_info("insertion point: {} {}".format(insertion_point.group.name(), insertion_point.position))
 

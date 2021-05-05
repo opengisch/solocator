@@ -23,20 +23,13 @@ from tempfile import NamedTemporaryFile
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication, QTreeWidgetItem
 
-from qgis.core import Qgis, QgsVectorLayer, QgsRasterLayer, QgsProject, QgsDataSourceUri, QgsWkbTypes
+from qgis.core import Qgis, QgsVectorLayer, QgsRasterLayer, QgsProject, QgsDataSourceUri, QgsWkbTypes, QgsLayerTreeRegistryBridge
 
 from solocator.core.loading_mode import LoadingMode
 from solocator.core.loading_options import LoadingOptions
 from solocator.core.settings import PG_HOST, PG_PORT, PG_DB
 from solocator.core.data_products import FACADE_LAYER, image_format_force_jpeg
 from solocator.core.utils import info
-
-# Compatibility for QGIS < 3.10
-# TODO: remove
-try:
-    from qgis.gui.QgsLayerTreeRegistryBridge import InsertionPoint
-except ModuleNotFoundError:
-    from .qgs_layer_tree_insertion_point import InsertionPoint, layerTreeInsertionPoint
 
 
 def postgis_datasource_to_uri(postgis_datasource: dict, pg_auth_id: str, pg_service: str) -> QgsDataSourceUri:
@@ -104,7 +97,7 @@ class SoLayer:
     def __repr__(self):
         return 'SoLayer: {}'.format(self.name)
 
-    def load(self, insertion_point: InsertionPoint, loading_options: LoadingOptions) -> bool:
+    def load(self, insertion_point: QgsLayerTreeRegistryBridge.InsertionPoint, loading_options: LoadingOptions) -> bool:
         layer = None
         if self.postgis_datasource is not None and loading_options.loading_mode == LoadingMode.PG:
             uri = postgis_datasource_to_uri(self.postgis_datasource, loading_options.pg_auth_id, loading_options.pg_service)
@@ -155,7 +148,7 @@ class SoGroup:
     def __repr__(self):
         return 'SoGroup: {} ( {} )'.format(self.name, ','.join([child.__repr__() for child in self.children]))
 
-    def load(self, insertion_point: InsertionPoint, loading_options: LoadingOptions):
+    def load(self, insertion_point: QgsLayerTreeRegistryBridge.InsertionPoint, loading_options: LoadingOptions):
         """
         Loads group in the layer tree
         :param insertion_point: The insertion point in the layer tree (group + position)
@@ -173,7 +166,7 @@ class SoGroup:
                 group = insertion_point.group.addGroup(self.name)
 
             for i, child in enumerate(self.children):
-                child.load(InsertionPoint(group, i), loading_options)
+                child.load(QgsLayerTreeRegistryBridge.InsertionPoint(group, i), loading_options)
         QApplication.restoreOverrideCursor()
 
     def tree_widget_item(self):
