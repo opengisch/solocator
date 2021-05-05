@@ -324,13 +324,13 @@ class SoLocatorFilter(QgsLocatorFilter):
         ctrl_clicked = Qt.ControlModifier == QApplication.instance().queryKeyboardModifiers()
         self.dbg_info(("CTRL pressed: {}".format(ctrl_clicked)))
 
-        if type(result.userData) == NoResult:
+        if type(self.get_user_data(result)) == NoResult:
             pass
-        elif type(result.userData) == FilterResult:
+        elif type(self.get_user_data(result)) == FilterResult:
             self.filtered_search(result.userData)
-        elif type(result.userData) == FeatureResult:
+        elif type(self.get_user_data(result)) == FeatureResult:
             self.fetch_feature(result.userData)
-        elif type(result.userData) == DataProductResult:
+        elif type(self.get_user_data(result)) == DataProductResult:
             self.fetch_data_product(result.userData, ctrl_clicked)
         else:
             self.info('Incorrect result. Please contact support', Qgis.Critical)
