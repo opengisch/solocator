@@ -31,6 +31,8 @@ from solocator.core.settings import PG_HOST, PG_PORT, PG_DB
 from solocator.core.data_products import FACADE_LAYER, image_format_force_jpeg
 from solocator.core.utils import info
 
+DEBUG = True
+
 
 def postgis_datasource_to_uri(postgis_datasource: dict, pg_auth_id: str, pg_service: str) -> QgsDataSourceUri:
     uri = QgsDataSourceUri()
@@ -104,7 +106,7 @@ class SoLayer:
             if uri:
                 layer = QgsVectorLayer(uri.uri(False), self.name, "postgres")
                 if layer.isValid() and self.qml:
-                    with NamedTemporaryFile(mode='w', suffix='.qml', delete=False) as fh:
+                    with NamedTemporaryFile(mode='w', suffix='.qml', delete=False, encoding='utf-8') as fh:
                         fh.write(self.qml)
                         msg, ok = layer.loadNamedStyle(fh.name)
                         fh.close()
