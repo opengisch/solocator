@@ -18,6 +18,7 @@
 """
 
 from PyQt5.QtGui import QIcon
+from solocator.core.utils import dbg_info
 
 DATA_PRODUCTS = {'foreground': 'Karten',
                  'background': 'Hintergrundkarten',
@@ -112,7 +113,10 @@ def force_wms(data: dict, is_background: bool) -> bool:
     if is_background:
         return True
     # if a child has no PG info, load as WMS
-    return missing_postgis_datasource(data)
+    missing_pg_source = missing_postgis_datasource(data)
+    if missing_pg_source:
+        dbg_info('forcing WMS due to missing PG data source')
+    return missing_pg_source
 
 
 def missing_postgis_datasource(data: dict):
