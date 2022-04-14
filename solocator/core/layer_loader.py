@@ -17,7 +17,7 @@
  ***************************************************************************/
 """
 
-from qgis.core import QgsLayerTreeRegistryBridge
+from qgis.core import QgsLayerTreeRegistryBridge, QgsProject
 from qgis.gui import QgisInterface
 
 from solocator.core.layer import SoLayer, SoGroup
@@ -56,7 +56,7 @@ class LayerLoader:
 
         # if background, insert at bottom of layer tree
         if is_background:
-            root = iface.layerTreeView().model().rootGroup()
+            root = QgsProject.instance().layerTreeRoot()
             pos = len(root.children())
             insertion_point = QgsLayerTreeRegistryBridge.InsertionPoint(root, pos)
 
