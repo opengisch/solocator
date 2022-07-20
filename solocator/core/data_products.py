@@ -32,7 +32,7 @@ DATA_PRODUCTS = {'foreground': 'Karten',
 
 
 DATAPRODUCT_TYPE_TRANSLATION = {
-    'datasetview': 'Layer',
+    'singleactor': 'Layer',
     'facadelayer': 'Fassadenlayer',
     'background': 'Hintergrundlayer'
 }
