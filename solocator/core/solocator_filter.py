@@ -260,7 +260,7 @@ class SoLocatorFilter(QgsLocatorFilter):
                     if _filter['count']:
                         result.displayString += ' ({})'.format(_filter['count'])
                     self.dbg_info(_filter)
-                    result.icon, _ = dataproduct2icon_description(_filter['dataproduct_id'], 'datasetview')
+                    result.icon, _ = dataproduct2icon_description(_filter['dataproduct_id'], 'singleactor')
                     result.userData = FilterResult(_filter['filterword'], search_text)
                     result.score = score
                     self.resultFetched.emit(result)

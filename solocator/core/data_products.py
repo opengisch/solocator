@@ -31,14 +31,14 @@ DATA_PRODUCTS = {'foreground': 'Karten',
                  'ch.so.agi.av.nomenklatur.gelaendenamen': 'Geländenamen'}
 
 
-DATAPRODUCT_TYPE_TRANSLATION = {
-    'datasetview': 'Layer',
-    'facadelayer': 'Fassadenlayer',
-    'background': 'Hintergrundlayer'
-}
-
 LAYER_GROUP = 'layergroup'
+SINGLE_ACTOR = 'singleactor'
 FACADE_LAYER = 'facadelayer'
+
+DATAPRODUCT_TYPE_TRANSLATION = {
+    LAYER_GROUP: 'Layergruppe',
+    SINGLE_ACTOR: 'Layer'
+}
 
 
 def dataproduct2icon_description(data_product: str, layer_type: str) -> QIcon:
@@ -52,11 +52,10 @@ def dataproduct2icon_description(data_product: str, layer_type: str) -> QIcon:
     icon = QIcon(":/plugins/solocator/icons/solocator.png")
 
     if data_product == 'dataproduct':
+        label = DATAPRODUCT_TYPE_TRANSLATION[layer_type]
         if layer_type == LAYER_GROUP:
-            label = 'Layergruppe'
             icon = QIcon(":/plugins/solocator/icons/results/ebene.svg")
         else:
-            label = DATAPRODUCT_TYPE_TRANSLATION[layer_type]
             icon = QIcon(":/plugins/solocator/icons/results/einzel-ebene.svg")
 
     elif data_product.startswith('ch.so.agi.av.gebaeudeadressen.gebaeudeeingaenge'):
