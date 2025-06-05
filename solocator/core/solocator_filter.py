@@ -218,9 +218,11 @@ class SoLocatorFilter(QgsLocatorFilter):
         result.displayString = '{prefix}{title}'.format(prefix=' ↳ ' if sub_layer else '', title=data['display'])
         if stacktype == 'background':
             result.group = 'Hintergrundkarten'
+            result.groupScore = 0.7
         else:
             loading_mode: LoadingMode = self.settings.value('default_layer_loading_mode')
             result.group = 'Vordergrundkarten (Doppelklick: {normal}, Ctrl-Doppelklick: {alt})'.format(normal=loading_mode, alt=loading_mode.alternate_mode())
+            result.groupScore = 0.8
         result.userData = DataProductResult(
             type=data['type'],
             dataproduct_id=data['dataproduct_id'],
@@ -256,6 +258,7 @@ class SoLocatorFilter(QgsLocatorFilter):
                     result = QgsLocatorResult()
                     result.filter = self
                     result.group = 'Suche verfeinern'
+                    result.groupScore = 1
                     result.displayString = _filter['filterword']
                     if _filter['count']:
                         result.displayString += ' ({})'.format(_filter['count'])
@@ -277,6 +280,7 @@ class SoLocatorFilter(QgsLocatorFilter):
                     # dbg_info("feature: {}".format(f))
                     result.displayString = f['display']
                     result.group = 'Orte'
+                    result.groupScore = 0.9
                     result.userData = FeatureResult(
                         dataproduct_id=f['dataproduct_id'],
                         id_field_name=f['id_field_name'],
