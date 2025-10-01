@@ -108,8 +108,8 @@ class SoLayer:
                 if layer.isValid() and self.qml:
                     with NamedTemporaryFile(mode='w', suffix='.qml', delete=False, encoding='utf-8') as fh:
                         fh.write(self.qml)
-                        msg, ok = layer.loadNamedStyle(fh.name)
                         fh.close()
+                        msg, ok = layer.loadNamedStyle(fh.name)
                         if not ok:
                             info(
                                 'SoLocator could not load QML style for layer {ln}. {emsg} URI: {uri}'
