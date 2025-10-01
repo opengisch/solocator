@@ -23,11 +23,11 @@ from qgis.utils import iface
 DEBUG = True
 
 
-def info(message: str, level: Qgis.MessageLevel = Qgis.Info):
+def info(message: str, level: Qgis.MessageLevel = Qgis.MessageLevel.Info):
     QgsMessageLog.logMessage("{}: {}".format('SoLocator', message), "Locator bar", level)
     iface.messageBar().pushMessage('SoLocator', message, level)
 
 
 def dbg_info(message: str):
     if DEBUG:
-        QgsMessageLog.logMessage("{}: {}".format('SoLocator', message), "Locator bar", Qgis.Info)
+        QgsMessageLog.logMessage("{}: {}".format('SoLocator', message), "Locator bar", Qgis.MessageLevel.Info)

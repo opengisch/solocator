@@ -23,9 +23,9 @@ import os
 import sys
 import traceback
 
-from PyQt5.QtCore import Qt, QTimer, QUrl, QUrlQuery, pyqtSignal
-from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QWidget, QApplication
+from qgis.PyQt.QtCore import Qt, QTimer, QUrl, QUrlQuery, pyqtSignal
+from qgis.PyQt.QtGui import QColor
+from qgis.PyQt.QtWidgets import QWidget, QApplication
 
 from qgis.core import Qgis, QgsLocatorFilter, QgsLocatorResult, QgsCoordinateReferenceSystem, \
     QgsCoordinateTransform, QgsProject, QgsGeometry, QgsWkbTypes, QgsPointXY, QgsLocatorContext, QgsFeedback
@@ -107,15 +107,15 @@ class SoLocatorFilter(QgsLocatorFilter):
             self.map_canvas = iface.mapCanvas()
             self.map_canvas.destinationCrsChanged.connect(self.create_transforms)
 
-            self.rubber_band = QgsRubberBand(self.map_canvas, QgsWkbTypes.PolygonGeometry)
+            self.rubber_band = QgsRubberBand(self.map_canvas, QgsWkbTypes.GeometryType.PolygonGeometry)
             self.rubber_band.setColor(QColor(255, 50, 50, 200))
             self.rubber_band.setFillColor(QColor(255, 255, 50, 160))
-            self.rubber_band.setBrushStyle(Qt.SolidPattern)
-            self.rubber_band.setLineStyle(Qt.SolidLine)
+            self.rubber_band.setBrushStyle(Qt.BrushStyle.SolidPattern)
+            self.rubber_band.setLineStyle(Qt.PenStyle.SolidLine)
             self.rubber_band.setIcon(self.rubber_band.ICON_CIRCLE)
             self.rubber_band.setIconSize(15)
             self.rubber_band.setWidth(4)
-            self.rubber_band.setBrushStyle(Qt.NoBrush)
+            self.rubber_band.setBrushStyle(Qt.BrushStyle.NoBrush)
 
             self.create_transforms()
 
@@ -126,7 +126,7 @@ class SoLocatorFilter(QgsLocatorFilter):
         return SoLocatorFilter()
 
     def priority(self):
-        return QgsLocatorFilter.Highest
+        return QgsLocatorFilter.Priority.Highest
 
     def displayName(self):
         return 'SoLocator'
@@ -136,7 +136,7 @@ class SoLocatorFilter(QgsLocatorFilter):
 
     def clearPreviousResults(self):
         if self.rubber_band:
-            self.rubber_band.reset(QgsWkbTypes.PointGeometry)
+            self.rubber_band.reset(QgsWkbTypes.GeometryType.PointGeometry)
 
         if self.current_timer is not None:
             self.current_timer.stop()
@@ -148,7 +148,7 @@ class SoLocatorFilter(QgsLocatorFilter):
 
     def openConfigWidget(self, parent=None):
         dlg = ConfigDialog(parent)
-        dlg.exec_()
+        dlg.exec()
 
     def create_transforms(self):
         # this should happen in the main thread
@@ -196,7 +196,7 @@ class SoLocatorFilter(QgsLocatorFilter):
             except RequestsExceptionUserAbort:
                 pass
             except RequestsException as err:
-                self.info(err, Qgis.Info)
+                self.info(err, Qgis.MessageLevel.Info)
 
             if not self.result_found:
                 result = QgsLocatorResult()
@@ -206,11 +206,11 @@ class SoLocatorFilter(QgsLocatorFilter):
                 self.resultFetched.emit(result)
 
         except Exception as e:
-            self.info(e, Qgis.Critical)
+            self.info(e, Qgis.MessageLevel.Critical)
             exc_type, exc_obj, exc_traceback = sys.exc_info()
             filename = os.path.split(exc_traceback.tb_frame.f_code.co_filename)[1]
-            self.info('{} {} {}'.format(exc_type, filename, exc_traceback.tb_lineno), Qgis.Critical)
-            self.info(traceback.print_exception(exc_type, exc_obj, exc_traceback), Qgis.Critical)
+            self.info('{} {} {}'.format(exc_type, filename, exc_traceback.tb_lineno), Qgis.MessageLevel.Critical)
+            self.info(traceback.print_exception(exc_type, exc_obj, exc_traceback), Qgis.MessageLevel.Critical)
 
     def data_product_qgsresult(self, data: dict, sub_layer: bool, score: float, stacktype) -> QgsLocatorResult:
         result = QgsLocatorResult()
@@ -315,17 +315,17 @@ class SoLocatorFilter(QgsLocatorFilter):
                 self.result_found = True
 
         except Exception as e:
-            self.info(str(e), Qgis.Critical)
+            self.info(str(e), Qgis.MessageLevel.Critical)
             exc_type, exc_obj, exc_traceback = sys.exc_info()
             filename = os.path.split(exc_traceback.tb_frame.f_code.co_filename)[1]
-            self.info('{} {} {}'.format(exc_type, filename, exc_traceback.tb_lineno), Qgis.Critical)
-            self.info(traceback.print_exception(exc_type, exc_obj, exc_traceback), Qgis.Critical)
+            self.info('{} {} {}'.format(exc_type, filename, exc_traceback.tb_lineno), Qgis.MessageLevel.Critical)
+            self.info(traceback.print_exception(exc_type, exc_obj, exc_traceback), Qgis.MessageLevel.Critical)
 
     def triggerResult(self, result: QgsLocatorResult):
         # this is run in the main thread, i.e. map_canvas is not None
         self.clearPreviousResults()
 
-        ctrl_clicked = Qt.ControlModifier == QApplication.instance().queryKeyboardModifiers()
+        ctrl_clicked = Qt.KeyboardModifier.ControlModifier == QApplication.instance().queryKeyboardModifiers()
         self.dbg_info(("CTRL pressed: {}".format(ctrl_clicked)))
 
         user_data = self.get_user_data(result)
@@ -338,7 +338,7 @@ class SoLocatorFilter(QgsLocatorFilter):
         elif type(user_data) == DataProductResult:
             self.fetch_data_product(user_data, ctrl_clicked)
         else:
-            self.info('Incorrect result. Please contact support', Qgis.Critical)
+            self.info('Incorrect result. Please contact support', Qgis.MessageLevel.Critical)
 
     def filtered_search(self, filter_result: FilterResult):
         search_text = '{prefix} {filter_word}: {search}'.format(
@@ -431,7 +431,7 @@ class SoLocatorFilter(QgsLocatorFilter):
         else:
             # SoLocator does not handle {geometry_type} yet. Please contact support
             self.info('SoLocator unterstützt den Geometrietyp {geometry_type} nicht.'
-                      ' Bitte kontaktieren Sie den Support.'.format(geometry_type=geometry_type), Qgis.Warning)
+                      ' Bitte kontaktieren Sie den Support.'.format(geometry_type=geometry_type), Qgis.MessageLevel.Warning)
 
         geometry.transform(self.transform_ch)
         self.highlight(geometry)
@@ -456,7 +456,7 @@ class SoLocatorFilter(QgsLocatorFilter):
         data = json.loads(response.content.decode('utf-8'))
         LayerLoader(data, self.iface, is_background, alternate_mode)
 
-    def info(self, msg="", level=Qgis.Info):
+    def info(self, msg="", level=Qgis.MessageLevel.Info):
         self.logMessage(str(msg), level)
 
     def dbg_info(self, msg=""):

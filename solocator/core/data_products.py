@@ -17,7 +17,7 @@
  ***************************************************************************/
 """
 
-from PyQt5.QtGui import QIcon
+from qgis.PyQt.QtGui import QIcon
 from solocator.core.utils import dbg_info
 
 DATA_PRODUCTS = {'foreground': 'Karten',
