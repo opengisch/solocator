@@ -2,6 +2,7 @@
 [general]
 name=SoLocator
 qgisMinimumVersion=3.10
+supportsQt6=yes
 description=Suche für Örtlichkeiten und Geodaten Kanton Solothurn | Locator search plugin for places and geo data of Canton Solothurn.
 about=Locator-Integration für die Suche in der Geodateninfrastruktur des Kantons Solothurn. Über dieses Plugin können Layer (Postgis and WMS), Flurnamen, Adressen und andere Objekte im Kanton Solothurn gesucht und lokalisiert werden. Postgis Datensätze können nur innerhalb der Kantonsverwaltung Solothurn geladen werden, WMS Layer von überall her. | Integration in the QGIS locator search bar for search in the geodata infrastructure of Canton Solothurn. One can search for layers (Postgis and WMS), place names, addresses, buildings, parcels and other objects in the canton Solothurn. Loading of Postgis layers only works when the user is within the network infrastructure of Canton Solothurn, WMS layers and place searches also work for the public.
 version=dev
