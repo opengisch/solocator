@@ -17,7 +17,10 @@
  ***************************************************************************/
 """
 
+import os
 from qgis.PyQt.QtGui import QIcon
+
+from solocator import PLUGIN_DIR
 from solocator.core.utils import dbg_info
 
 DATA_PRODUCTS = {'foreground': 'Karten',
@@ -41,7 +44,7 @@ DATAPRODUCT_TYPE_TRANSLATION = {
 }
 
 
-def dataproduct2icon_description(data_product: str, layer_type: str) -> QIcon:
+def dataproduct2icon_description(data_product: str, layer_type: str | None) -> QIcon:
     """
     Returns an icon for a given data product
     :param data_product:
@@ -49,44 +52,56 @@ def dataproduct2icon_description(data_product: str, layer_type: str) -> QIcon:
     :return: The QIcon
     """
     label = None
-    icon = QIcon(":/plugins/solocator/icons/solocator.png")
+    icon = QIcon(str(os.path.join(PLUGIN_DIR, "icons", "solocator.png")))
 
     if data_product == 'dataproduct':
         label = DATAPRODUCT_TYPE_TRANSLATION[layer_type]
         if layer_type == LAYER_GROUP:
-            icon = QIcon(":/plugins/solocator/icons/results/ebene.svg")
+            icon = QIcon(get_result_icon_path("ebene.svg"))
         else:
-            icon = QIcon(":/plugins/solocator/icons/results/einzel-ebene.svg")
+            icon = QIcon(get_result_icon_path("einzel-ebene.svg"))
 
     elif data_product.startswith('ch.so.agi.av.gebaeudeadressen.gebaeudeeingaenge'):
         label = 'Adresse'
-        icon = QIcon(":/plugins/solocator/icons/results/adresse.svg")
+        icon = QIcon(get_result_icon_path("adresse.svg"))
 
     elif data_product.startswith('ch.so.agi.gemeindegrenzen'):
         label = 'Gemeinde'
-        icon = QIcon(":/plugins/solocator/icons/results/gemeinde.svg")
+        icon = QIcon(get_result_icon_path("gemeinde.svg"))
 
     elif data_product.startswith('ch.so.agi.av.bodenbedeckung'):
         label = 'Gebäude (EGID)'
-        icon = QIcon(":/plugins/solocator/icons/results/ort_punkt.svg")
+        icon = QIcon(get_result_icon_path("ort_punkt.svg"))
 
     elif data_product.startswith('ch.so.agi.av.grundstuecke.projektierte'):
         label = 'Grundstück projektiert'
-        icon = QIcon(":/plugins/solocator/icons/results/grundstuecke.svg")
+        icon = QIcon(get_result_icon_path("grundstuecke.svg"))
 
     elif data_product.startswith('ch.so.agi.av.grundstuecke.rechtskraeftig'):
         label = 'Grundstück rechtskräftig'
-        icon = QIcon(":/plugins/solocator/icons/results/grundstuecke.svg")
+        icon = QIcon(get_result_icon_path("grundstuecke.svg"))
 
     elif data_product.startswith('ch.so.agi.av.nomenklatur.flurnamen'):
         label = 'Flurname'
-        icon = QIcon(":/plugins/solocator/icons/results/gelaende_flurname.svg")
+        icon = QIcon(get_result_icon_path("gelaende_flurname.svg"))
 
     elif data_product.startswith('ch.so.agi.av.nomenklatur.gelaendename'):
         label = 'Geländename'
-        icon = QIcon(":/plugins/solocator/icons/results/gelaende_flurname.svg")
+        icon = QIcon(get_result_icon_path("gelaende_flurname.svg"))
 
     return icon, label
+
+
+def get_result_icon_path(file_name: str) -> str:
+    """
+    Returns the absolute path of an icon file in the results folder
+    Args:
+        file_name: icon file name
+
+    Returns: Absolute path to of the icon file as string
+
+    """
+    return str(os.path.join(PLUGIN_DIR, "icons", "results", file_name))
 
 
 def image_format_force_jpeg(name: str, is_background: str) -> bool:

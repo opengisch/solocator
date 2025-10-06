@@ -39,8 +39,6 @@ from solocator.core.loading_mode import LoadingMode
 from solocator.core.utils import DEBUG
 from solocator.gui.config_dialog import ConfigDialog
 
-import solocator.resources_rc  # NOQA
-
 
 class FeatureResult:
     def __init__(self, dataproduct_id, id_field_name, id_field_type, feature_id):
