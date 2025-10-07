@@ -98,7 +98,7 @@ def get_result_icon_path(file_name: str) -> str:
     Args:
         file_name: icon file name
 
-    Returns: Absolute path to of the icon file as string
+    Returns: Absolute path of the icon file as string
 
     """
     return str(os.path.join(PLUGIN_DIR, "icons", "results", file_name))
