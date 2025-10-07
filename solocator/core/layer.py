@@ -37,28 +37,28 @@ DEBUG = True
 def postgis_datasource_to_uri(postgis_datasource: dict, pg_auth_id: str, pg_service: str) -> QgsDataSourceUri:
     uri = QgsDataSourceUri()
     if not pg_service:
-        uri.setConnection(PG_HOST, PG_PORT, PG_DB, None, None, QgsDataSourceUri.SslPrefer, pg_auth_id)
+        uri.setConnection(PG_HOST, PG_PORT, PG_DB, None, None, QgsDataSourceUri.SslMode.SslPrefer, pg_auth_id)
     else:
-        uri.setConnection(pg_service, None, None, None, QgsDataSourceUri.SslPrefer, pg_auth_id)
+        uri.setConnection(pg_service, None, None, None, QgsDataSourceUri.SslMode.SslPrefer, pg_auth_id)
     [schema, table_name] = postgis_datasource['data_set_name'].split('.')
     uri.setDataSource(schema, table_name, postgis_datasource['geometry_field'])
     uri.setKeyColumn(postgis_datasource['primary_key'])
     wkb_type = None
     if postgis_datasource['geometry_type'].upper() == 'POINT':
-        wkb_type = QgsWkbTypes.Point
+        wkb_type = QgsWkbTypes.Type.Point
     elif postgis_datasource['geometry_type'].upper() == 'MULITPOINT':
-        wkb_type = QgsWkbTypes.MultiPoint
+        wkb_type = QgsWkbTypes.Type.MultiPoint
     elif postgis_datasource['geometry_type'].upper() == 'POLYGON':
-        wkb_type = QgsWkbTypes.Polygon
+        wkb_type = QgsWkbTypes.Type.Polygon
     elif postgis_datasource['geometry_type'].upper() == 'MULTIPOLYGON':
-        wkb_type = QgsWkbTypes.MultiPolygon
+        wkb_type = QgsWkbTypes.Type.MultiPolygon
     elif postgis_datasource['geometry_type'].upper() == 'LINESTRING':
-        wkb_type = QgsWkbTypes.LineString
+        wkb_type = QgsWkbTypes.Type.LineString
     elif postgis_datasource['geometry_type'].upper() == 'MULTILINESTRING':
-        wkb_type = QgsWkbTypes.MultiLineString
+        wkb_type = QgsWkbTypes.Type.MultiLineString
     else:
         info('SoLocator unterstützt den Geometrietyp {geometry_type} nicht. Bitte kontaktieren Sie den Support.'.format(
-            geometry_type=postgis_datasource['geometry_type']), Qgis.Warning
+            geometry_type=postgis_datasource['geometry_type']), Qgis.MessageLevel.Warning
         )
     if wkb_type:
         uri.setWkbType(wkb_type)
@@ -114,7 +114,7 @@ class SoLayer:
                             info(
                                 'SoLocator could not load QML style for layer {ln}. {emsg} URI: {uri}'
                                 .format(ln=self.name, emsg=msg, uri=uri.uri(False)),
-                                Qgis.Warning
+                                Qgis.MessageLevel.Warning
                             )
         if layer is None:
             if image_format_force_jpeg(self.name, self.is_background):
@@ -125,7 +125,7 @@ class SoLayer:
             layer = QgsRasterLayer(url, self.name, 'wms')
         QgsProject.instance().addMapLayer(layer, False)
         if not layer.isValid():
-            info('Layer {} konnte nicht korrekt geladen werden.'.format(self.name), Qgis.Warning)
+            info('Layer {} konnte nicht korrekt geladen werden.'.format(self.name), Qgis.MessageLevel.Warning)
             return False
         else:
             if insertion_point.position >= 0:
@@ -136,7 +136,7 @@ class SoLayer:
 
     def tree_widget_item(self):
         item = QTreeWidgetItem([self.name])
-        item.setData(0, Qt.UserRole, deepcopy(self))
+        item.setData(0, Qt.ItemDataRole.UserRole, deepcopy(self))
         return item
 
 
@@ -156,7 +156,7 @@ class SoGroup:
         :param insertion_point: The insertion point in the layer tree (group + position)
         :param load_options: the configuration to load layers
         """
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         if loading_options.loading_mode != LoadingMode.PG \
                 and self.layer.wms_datasource is not None \
                 and (not loading_options.wms_load_separate or self.type == FACADE_LAYER):
@@ -174,5 +174,5 @@ class SoGroup:
     def tree_widget_item(self):
         item = QTreeWidgetItem([self.name])
         item.addChildren([child.tree_widget_item() for child in self.children])
-        item.setData(0, Qt.UserRole, deepcopy(self))
+        item.setData(0, Qt.ItemDataRole.UserRole, deepcopy(self))
         return item

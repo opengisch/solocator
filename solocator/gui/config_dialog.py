@@ -46,13 +46,13 @@ class ConfigDialog(QDialog, DialogUi, SettingDialog):
         self.skipped_dataproducts.setRowCount(len(DATA_PRODUCTS))
         self.skipped_dataproducts.setColumnCount(2)
         self.skipped_dataproducts.setHorizontalHeaderLabels((self.tr('Name'), self.tr('ID')))
-        self.skipped_dataproducts.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.skipped_dataproducts.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.skipped_dataproducts.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.skipped_dataproducts.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         r = 0
         for _id, name in DATA_PRODUCTS.items():
             item = QTableWidgetItem(name)
-            item.setData(Qt.UserRole, _id)
-            item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsUserCheckable)
+            item.setData(Qt.ItemDataRole.UserRole, _id)
+            item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsUserCheckable)
             self.skipped_dataproducts.setItem(r, 0, item)
             self.skipped_dataproducts.setItem(r, 1, QTableWidgetItem(_id))
             r += 1
@@ -79,12 +79,12 @@ class ConfigDialog(QDialog, DialogUi, SettingDialog):
     def select_all(self, select: bool = True):
         for r in range(self.skipped_dataproducts.rowCount()):
             item = self.skipped_dataproducts.item(r, 0)
-            item.setCheckState(Qt.Checked if select else Qt.Unchecked)
+            item.setCheckState(Qt.CheckState.Checked if select else Qt.CheckState.Unchecked)
 
     @pyqtSlot(str)
     def filter_rows(self, text: str):
         if text:
-            items = self.skipped_dataproducts.findItems(text, Qt.MatchContains)
+            items = self.skipped_dataproducts.findItems(text, Qt.MatchFlag.MatchContains)
             shown_rows = []
             for item in items:
                 shown_rows.append(item.row())

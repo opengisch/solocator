@@ -22,8 +22,8 @@ from builtins import str
 import re
 import urllib.request, urllib.error, urllib.parse
 
-from PyQt5.QtCore import QObject, pyqtSignal, QUrl, QEventLoop
-from PyQt5.QtNetwork import QNetworkRequest, QNetworkReply
+from qgis.PyQt.QtCore import QObject, pyqtSignal, QUrl, QEventLoop
+from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply
 
 from qgis.core import QgsNetworkAccessManager, QgsAuthManager, QgsMessageLog
 
@@ -230,7 +230,7 @@ class NetworkAccessManager(QObject):
 
         # Catch all exceptions (and clean up requests)
         try:
-            self.el.exec_(QEventLoop.ExcludeUserInputEvents)
+            self.el.exec(QEventLoop.ProcessEventsFlag.ExcludeUserInputEvents)
         except Exception as e:
             raise e
 
@@ -264,8 +264,8 @@ class NetworkAccessManager(QObject):
     #@pyqtSlot(QObject)
     def replyFinished(self):
         err = self.reply.error()
-        httpStatus = self.reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
-        httpStatusMessage = self.reply.attribute(QNetworkRequest.HttpReasonPhraseAttribute)
+        httpStatus = self.reply.attribute(QNetworkRequest.Attribute.HttpStatusCodeAttribute)
+        httpStatusMessage = self.reply.attribute(QNetworkRequest.Attribute.HttpReasonPhraseAttribute)
         self.http_call_result.status_code = httpStatus
         self.http_call_result.status = httpStatus
         self.http_call_result.status_message = httpStatusMessage
@@ -273,7 +273,7 @@ class NetworkAccessManager(QObject):
             self.http_call_result.headers[str(k)] = str(v)
             self.http_call_result.headers[str(k).lower()] = str(v)
 
-        if err != QNetworkReply.NoError:
+        if err != QNetworkReply.NetworkError.NoError:
             # handle error
             # check if errorString is empty, if so, then set err string as
             # reply dump
@@ -293,13 +293,13 @@ class NetworkAccessManager(QObject):
             self.http_call_result.ok = False
             self.msg_log(msg)
             # set return exception
-            if err == QNetworkReply.TimeoutError:
+            if err == QNetworkReply.NetworkError.TimeoutError:
                 self.http_call_result.exception = RequestsExceptionTimeout(msg)
 
-            elif err == QNetworkReply.ConnectionRefusedError:
+            elif err == QNetworkReply.NetworkError.ConnectionRefusedError:
                 self.http_call_result.exception = RequestsExceptionConnectionError(msg)
 
-            elif err == QNetworkReply.OperationCanceledError:
+            elif err == QNetworkReply.NetworkError.OperationCanceledError:
                 # request abort by calling NAM.abort() => cancelled by the user
                 if self.on_abort:
                     self.http_call_result.exception = RequestsExceptionUserAbort(msg)
@@ -315,7 +315,7 @@ class NetworkAccessManager(QObject):
 
         else:
             # Handle redirections
-            redirection_url = self.reply.attribute(QNetworkRequest.RedirectionTargetAttribute)
+            redirection_url = self.reply.attribute(QNetworkRequest.Attribute.RedirectionTargetAttribute)
             if redirection_url is not None and redirection_url != self.reply.url():
                 if redirection_url.isRelative():
                     redirection_url = self.reply.url().resolved(redirection_url)
