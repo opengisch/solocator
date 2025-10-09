@@ -44,7 +44,7 @@ DATAPRODUCT_TYPE_TRANSLATION = {
 }
 
 
-def dataproduct2icon_description(data_product: str, layer_type: str | None) -> QIcon:
+def dataproduct2icon_description(data_product: str, layer_type: str) -> QIcon:
     """
     Returns an icon for a given data product
     :param data_product:
